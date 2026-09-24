@@ -2,13 +2,14 @@
 
 Private dashboard for Samuel Olajide (Dundalk, Ireland, Europe/London). It keeps the apply history, scores newly discovered remote roles, and holds the queue the apply agent is allowed to submit.
 
-Discovery uses three public boards:
+Discovery uses four sources, in this order:
 
+- **Hiring Cafe** — remote Ireland/EU-flexible search against their private `search-jobs` API (no public API; Cloudflare may block some hosts)
 - **Jobicy** — Europe and Ireland engineering feeds
 - **Remotive** — software-dev feed
 - **Remote OK** — public JSON feed
 
-Hiring Cafe has no public API in this build. Add those listings with **Add role** or **Import CSV**.
+Auto-queue is on by default. New roles that score ≥60, are not senior titles, look Ireland/EU eligible, and match at least one keyword (AI, LLM, Python, full-stack, …) land in **Queue**. Already tracked URLs are never overwritten.
 
 ## Local
 

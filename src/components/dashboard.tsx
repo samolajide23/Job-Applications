@@ -144,6 +144,7 @@ export function Dashboard({ initialApplications, initialRules }: { initialApplic
         added?: number;
         alreadyTracked?: number;
         autoQueued?: number;
+        promoted?: number;
         ineligible?: number;
         sources?: { source: string; fetched: number; error: string | null }[];
       };
@@ -176,7 +177,16 @@ export function Dashboard({ initialApplications, initialRules }: { initialApplic
       return;
     }
     setRules(body.rules);
-    setNotice(next.autoQueue ? "Auto-queue is on for the next pull." : "Queue rules saved.");
+    try {
+      await load();
+    } catch {
+      /* list refresh is best-effort after a successful save */
+    }
+    setNotice(
+      next.autoQueue
+        ? "Auto-queue is on. Matching discovered roles were moved to the apply queue."
+        : "Queue rules saved.",
+    );
   }
 
   async function handleLogout() {

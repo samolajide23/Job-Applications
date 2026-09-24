@@ -145,7 +145,10 @@ function postedIso(value: unknown): string | null {
 }
 
 function chooseUrl(listingUrl: string, description: string, applyUrl = ""): string {
-  const externalApply = applyUrl && !/remoteok\.com|remotive\.com|jobicy\.com/i.test(applyUrl) ? applyUrl : "";
+  const externalApply =
+    applyUrl && !/remoteok\.com|remotive\.com|jobicy\.com|hiringcafe\.com|hiring\.cafe/i.test(applyUrl)
+      ? applyUrl
+      : "";
   return externalApply || extractAtsUrl(description) || listingUrl;
 }
 

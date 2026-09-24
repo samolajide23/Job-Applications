@@ -3,7 +3,6 @@ import type { HistoryRecord } from "@/lib/csv";
 import { isTrackerStatus, type Status } from "@/lib/statuses";
 import type { Application, Origin, QueueRules, ScoreBreakdown } from "@/lib/types";
 import { DEFAULT_RULES } from "@/lib/types";
-
 export type Queryable = {
   query<T extends Record<string, unknown>>(text: string, params?: unknown[]): Promise<T[]>;
 };
@@ -51,7 +50,7 @@ const SCHEMA = [
   `CREATE INDEX IF NOT EXISTS applications_applied_at_idx ON applications (applied_at DESC)`,
   `CREATE TABLE IF NOT EXISTS queue_rules (
     id TEXT PRIMARY KEY,
-    auto_queue BOOLEAN NOT NULL DEFAULT FALSE,
+    auto_queue BOOLEAN NOT NULL DEFAULT TRUE,
     min_score INTEGER NOT NULL DEFAULT 60,
     exclude_senior BOOLEAN NOT NULL DEFAULT TRUE,
     eligible_only BOOLEAN NOT NULL DEFAULT TRUE,
@@ -90,6 +89,17 @@ export async function ensureSchema(db: Queryable): Promise<void> {
   for (const statement of SCHEMA) {
     await db.query(statement);
   }
+  await bootstrapAutoQueue(db);
+}
+
+async function bootstrapAutoQueue(db: Queryable): Promise<void> {
+  const claimed = await db.query<{ key: string }>(
+    `INSERT INTO app_meta (key, value) VALUES ('rules_autoqueue_v1', '1')
+     ON CONFLICT (key) DO NOTHING
+     RETURNING key`,
+  );
+  if (claimed.length === 0) return;
+  await saveRules(db, DEFAULT_RULES);
 }
 
 export async function listApplications(db: Queryable): Promise<Application[]> {
@@ -374,6 +384,41 @@ export async function saveRules(db: Queryable, rules: QueueRules): Promise<Queue
     ],
   );
   return getRules(db);
+}
+
+export async function promoteMatchingDiscovered(db: Queryable, rules: QueueRules): Promise<number> {
+  if (!rules.autoQueue) return 0;
+  const { shouldAutoQueue } = await import("@/lib/filters");
+  const applications = await listApplications(db);
+  const ids = applications
+    .filter((application) => {
+      if (application.status !== "discovered") return false;
+      if (application.score === null || !application.scoreBreakdown) return false;
+      if (!withinPostedDays(application, rules.postedWithinDays)) return false;
+      const haystack = [
+        application.title,
+        application.company,
+        application.tags.join(" "),
+        application.excerpt ?? "",
+        application.location ?? "",
+      ].join("\n");
+      return shouldAutoQueue(rules, {
+        total: application.score,
+        eligible: application.scoreBreakdown.eligible,
+        seniorityFlag: application.scoreBreakdown.seniorityFlag,
+        haystack,
+      });
+    })
+    .map((application) => application.id);
+  if (ids.length === 0) return 0;
+  return bulkStatus(db, ids, "queued");
+}
+
+function withinPostedDays(application: Application, days: number, now: Date = new Date()): boolean {
+  if (days <= 0) return true;
+  const stamp = application.postedAt ?? application.discoveredAt;
+  if (!stamp) return true;
+  return now.getTime() - new Date(stamp).getTime() <= days * 86_400_000;
 }
 
 function mapRow(row: DbRow): Application {

@@ -4,6 +4,7 @@ import {
   mapRemotiveJob,
   type DiscoveredJob,
 } from "@/lib/discover";
+import { pullHiringCafe } from "@/lib/hiring-cafe";
 
 export type BoardResult = {
   source: string;
@@ -35,8 +36,17 @@ function jobsFrom(value: unknown, key: string): unknown[] {
   return [];
 }
 
-export async function pullBoards(): Promise<BoardResult[]> {
+export async function pullBoards(options?: { postedWithinDays?: number }): Promise<BoardResult[]> {
+  const days = options?.postedWithinDays && options.postedWithinDays > 0 ? options.postedWithinDays : 14;
   const tasks: { source: string; run: () => Promise<DiscoveredJob[]> }[] = [
+    {
+      source: "HiringCafe",
+      run: async () =>
+        pullHiringCafe({
+          days,
+          queries: ["AI engineer", "LLM", "Python engineer", "full stack", "backend engineer"],
+        }),
+    },
     {
       source: "Jobicy",
       run: async () => {

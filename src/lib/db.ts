@@ -10,6 +10,7 @@ import {
   listQueued,
   markSeedLoaded,
   patchApplication,
+  promoteMatchingDiscovered,
   saveRules,
   seedLoaded,
   upsertByUrl,
@@ -113,7 +114,15 @@ export async function readRules(): Promise<QueueRules> {
 }
 
 export async function writeRules(rules: QueueRules): Promise<QueueRules> {
-  return saveRules(await getDb(), rules);
+  const db = await getDb();
+  const saved = await saveRules(db, rules);
+  await promoteMatchingDiscovered(db, saved);
+  return saved;
+}
+
+export async function promoteQueueMatches(): Promise<number> {
+  const db = await getDb();
+  return promoteMatchingDiscovered(db, await getRules(db));
 }
 
 export async function applicationById(id: string): Promise<Application | null> {

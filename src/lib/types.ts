@@ -75,15 +75,6 @@ export type Stats = {
   last30Days: DayCount[];
 };
 
-export const DEFAULT_RULES: QueueRules = {
-  autoQueue: false,
-  minScore: 60,
-  excludeSenior: true,
-  eligibleOnly: true,
-  keywords: [],
-  postedWithinDays: 14,
-};
-
 export const KEYWORD_PRESETS = [
   "AI",
   "LLM",
@@ -94,4 +85,14 @@ export const KEYWORD_PRESETS = [
   "automation",
   "TypeScript",
   "RAG",
+  "GenAI",
 ] as const;
+
+export const DEFAULT_RULES: QueueRules = {
+  autoQueue: true,
+  minScore: 60,
+  excludeSenior: true,
+  eligibleOnly: true,
+  keywords: [...KEYWORD_PRESETS],
+  postedWithinDays: 14,
+};

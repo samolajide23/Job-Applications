@@ -3,7 +3,7 @@ import { failureResponse, unauthorized } from "@/lib/api";
 import { authorize } from "@/lib/auth";
 import { pullBoards } from "@/lib/boards";
 import { prepareDiscovery } from "@/lib/discover";
-import { insertNew, readRules } from "@/lib/db";
+import { insertNew, promoteQueueMatches, readRules } from "@/lib/db";
 import type { NewApplication } from "@/lib/repository";
 
 export const runtime = "nodejs";
@@ -12,7 +12,7 @@ export const maxDuration = 60;
 
 async function runDiscovery() {
   const rules = await readRules();
-  const boards = await pullBoards();
+  const boards = await pullBoards({ postedWithinDays: rules.postedWithinDays });
   const prepared = prepareDiscovery(
     boards.flatMap((board) => board.jobs),
     rules,
@@ -37,6 +37,7 @@ async function runDiscovery() {
   }));
   const inserted = new Set(await insertNew(rows));
   const added = prepared.accepted.filter((job) => inserted.has(job.url));
+  const promoted = await promoteQueueMatches();
   return {
     ok: true,
     sources: boards.map((board) => ({
@@ -49,7 +50,8 @@ async function runDiscovery() {
     ineligible: prepared.ineligible,
     notSoftware: prepared.notSoftware,
     tooOld: prepared.tooOld,
-    autoQueued: added.filter((job) => job.status === "queued").length,
+    autoQueued: added.filter((job) => job.status === "queued").length + promoted,
+    promoted,
   };
 }
 
