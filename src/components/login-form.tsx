@@ -1,13 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 export function LoginForm({ configured }: { configured: boolean }) {
-  const router = useRouter();
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
@@ -27,8 +25,9 @@ export function LoginForm({ configured }: { configured: boolean }) {
       setError(body.error ?? "Could not sign in.");
       return;
     }
-    router.push("/");
-    router.refresh();
+    // Full navigation so the new session cookie is sent. A client-side
+    // router.push can reuse the cached redirect back to /login.
+    window.location.assign("/");
   }
 
   return (
