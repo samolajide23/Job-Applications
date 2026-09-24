@@ -4,6 +4,7 @@ import {
   mapRemotiveJob,
   type DiscoveredJob,
 } from "@/lib/discover";
+import { pullGreenhouse } from "@/lib/greenhouse";
 import { pullHiringCafe } from "@/lib/hiring-cafe";
 
 export type BoardResult = {
@@ -46,6 +47,16 @@ export async function pullBoards(options?: { postedWithinDays?: number }): Promi
           days,
           queries: ["AI engineer", "LLM", "Python engineer", "full stack", "backend engineer"],
         }),
+    },
+    {
+      source: "Greenhouse",
+      run: async () => {
+        const result = await pullGreenhouse({ postedWithinDays: days });
+        if (result.errors.length > 0 && result.jobs.length === 0) {
+          throw new Error(result.errors.slice(0, 3).join("; "));
+        }
+        return result.jobs;
+      },
     },
     {
       source: "Jobicy",

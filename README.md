@@ -2,9 +2,10 @@
 
 Private dashboard for Samuel Olajide (Dundalk, Ireland, Europe/London). It keeps the apply history, scores newly discovered remote roles, and holds the queue the apply agent is allowed to submit.
 
-Discovery uses four sources, in this order:
+Discovery uses these sources, in this order:
 
 - **Hiring Cafe** — remote Ireland/EU-flexible search against their private `search-jobs` API (no public API; Cloudflare may block some hosts)
+- **Greenhouse** — public board API for companies from your history (Canonical, GitLab, Intercom, Elastic, Datadog, Vercel, NearForm, …). There is no global Greenhouse search; we poll known board tokens.
 - **Jobicy** — Europe and Ireland engineering feeds
 - **Remotive** — software-dev feed
 - **Remote OK** — public JSON feed

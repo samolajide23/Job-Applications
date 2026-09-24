@@ -85,7 +85,7 @@ export function CandidateView({
         <div>
           <h2 className="text-base font-medium">Candidates</h2>
           <p className="text-sm text-muted-foreground">
-            Pulled from Hiring Cafe first, then Jobicy, Remotive, and Remote OK. Score is rules-only —
+            Pulled from Hiring Cafe, Greenhouse, Jobicy, Remotive, and Remote OK. Score is rules-only —
             missing evidence stays at zero. Auto-queue sends new matches (≥ score, not senior, eligible)
             into the apply queue.
           </p>
@@ -186,8 +186,8 @@ export function CandidateView({
       </div>
       {candidates.length === 0 ? (
         <p className="rounded-xl bg-card/80 px-4 py-8 text-center text-sm text-muted-foreground ring-1 ring-foreground/10">
-          No discovered roles yet. Pull Hiring Cafe first (then Jobicy, Remotive, Remote OK), or add a
-          listing yourself. New matches that pass your rules go straight to the apply queue when
+          No discovered roles yet. Pull Hiring Cafe and Greenhouse first (then Jobicy, Remotive, Remote OK),
+          or add a listing yourself. New matches that pass your rules go straight to the apply queue when
           auto-queue is on.
         </p>
       ) : visible.length === 0 ? (
