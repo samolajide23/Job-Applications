@@ -97,7 +97,7 @@ curl -X POST "$APP_URL/api/discover" \
 ## What the screens do
 
 - **Tracker** — seeded history plus anything already applied, skipped, or blocked. KPIs, source mix, last 30 days in Europe/London, search, and inline status, score, location, and notes.
-- **Candidates** — discovered roles with keyword, seniority, eligibility, source, company, recency, and score filters. Queue or pass a role. Save the same filters as auto-queue rules.
+- **Candidates** — discovered roles with keyword, seniority, eligibility, source, company, recency, and score filters. Queue or pass a role. Save the same filters as auto-queue rules. Auto-queue is on by default.
 - **Queue** — roles the agent should apply to.
 
 Response rate is `(rejected + interview + final interview + offer + recruiter contacted) / submitted`. Submitted means applied plus later pipeline statuses. Skipped, blocked, needs input, and candidates are not in that denominator. The Applied card is only the current `applied` status.
