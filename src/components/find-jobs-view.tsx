@@ -24,9 +24,9 @@ export function FindJobsView({
 }) {
   const [query, setQuery] = useState("");
 
-  // Auto filters are fixed (same rules used on pull). No toggles — only a search box.
+  // Only roles still waiting for a decision. Queued ones live on Queue only.
   const roles = applications
-    .filter((application) => ["discovered", "queued"].includes(application.status))
+    .filter((application) => application.status === "discovered")
     .filter((application) => {
       if (rules.excludeSenior && roleIsSenior(application)) return false;
       if (rules.eligibleOnly && application.scoreBreakdown?.eligible === "ineligible") return false;
@@ -41,9 +41,6 @@ export function FindJobsView({
     })
     .sort((a, b) => (b.score ?? -1) - (a.score ?? -1));
 
-  const needsReview = roles.filter((application) => application.status === "discovered");
-  const queuedHere = roles.filter((application) => application.status === "queued");
-
   return (
     <div className="grid gap-5">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
@@ -51,8 +48,8 @@ export function FindJobsView({
           <h2 className="text-lg font-semibold tracking-tight">Find jobs</h2>
           <p className="max-w-xl text-sm text-muted-foreground">
             Boards return hundreds of listings. We keep junior/mid software roles that match your stack
-            and aren&apos;t geo-blocked. Score {rules.minScore}+ goes to Queue automatically — everything
-            here is already filtered.
+            and aren&apos;t geo-blocked. Score {rules.minScore}+ goes to Queue automatically; queued roles
+            leave this list.
           </p>
         </div>
         <Button type="button" onClick={() => void onDiscover()} disabled={discovering} className="shrink-0">
@@ -70,22 +67,16 @@ export function FindJobsView({
 
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-foreground/10 pb-3">
         <p className="text-sm text-muted-foreground">
-          <span className="font-medium text-foreground">{needsReview.length}</span> to review
-          {queuedHere.length > 0 ? (
-            <>
-              {" "}
-              · <span className="font-medium text-foreground">{queuedHere.length}</span> already queued
-            </>
-          ) : null}
+          <span className="font-medium text-foreground">{roles.length}</span> to review
         </p>
         <Button
           type="button"
           variant="outline"
           size="sm"
-          disabled={needsReview.length === 0}
-          onClick={() => void onBulk(needsReview.map((application) => application.id), "queued")}
+          disabled={roles.length === 0}
+          onClick={() => void onBulk(roles.map((application) => application.id), "queued")}
         >
-          Queue all ({needsReview.length})
+          Queue all ({roles.length})
         </Button>
       </div>
 
@@ -119,9 +110,6 @@ export function FindJobsView({
                     {application.score ?? "—"}
                   </span>
                   <h3 className="text-base font-medium leading-snug">{application.title}</h3>
-                  {application.status === "queued" ? (
-                    <span className="text-xs text-muted-foreground">In queue</span>
-                  ) : null}
                 </div>
                 <p className="mt-1 text-sm text-muted-foreground">
                   {application.company}
@@ -139,10 +127,9 @@ export function FindJobsView({
                 <Button
                   type="button"
                   size="sm"
-                  disabled={application.status === "queued"}
                   onClick={() => void onPatch(application.id, { status: "queued" })}
                 >
-                  {application.status === "queued" ? "Queued" : "Queue"}
+                  Queue
                 </Button>
                 <Button
                   type="button"
