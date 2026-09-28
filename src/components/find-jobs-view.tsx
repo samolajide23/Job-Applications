@@ -5,11 +5,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { formatAge } from "@/lib/dates";
 import { matchesKeywords, roleIsSenior, withinPostedWindow } from "@/lib/filters";
+import type { SourceStatus } from "@/lib/sources";
 import type { Application, QueueRules } from "@/lib/types";
 
 export function FindJobsView({
   applications,
   rules,
+  sourceStatuses,
   onPatch,
   onBulk,
   onDiscover,
@@ -17,6 +19,7 @@ export function FindJobsView({
 }: {
   applications: Application[];
   rules: QueueRules;
+  sourceStatuses: SourceStatus[];
   onPatch: (id: string, patch: Record<string, unknown>) => Promise<void>;
   onBulk: (ids: string[], status: "queued" | "dismissed" | "discovered") => Promise<void>;
   onDiscover: () => Promise<void>;
@@ -56,6 +59,8 @@ export function FindJobsView({
           {discovering ? "Searching…" : "Search boards"}
         </Button>
       </div>
+
+      <SourceStrip sources={sourceStatuses} discovering={discovering} />
 
       <Input
         value={query}
@@ -154,6 +159,61 @@ export function FindJobsView({
       )}
     </div>
   );
+}
+
+function SourceStrip({ sources, discovering }: { sources: SourceStatus[]; discovering: boolean }) {
+  return (
+    <div className="overflow-x-auto">
+      <ul
+        aria-label="Job sources"
+        className="flex min-w-max items-stretch gap-0 divide-x divide-foreground/10 border-y border-foreground/10"
+      >
+        {sources.map((source) => {
+          const tone = healthTone(source.health);
+          const detail = sourceDetail(source, discovering);
+          return (
+            <li
+              key={source.id}
+              title={source.error ?? detail}
+              className="flex min-w-[8.5rem] items-center gap-2.5 px-4 py-3 first:pl-0 last:pr-0"
+            >
+              <span
+                aria-hidden
+                className={`h-2 w-2 shrink-0 rounded-full ${tone.dot} ${source.health === "searching" ? "animate-pulse" : ""}`}
+              />
+              <div className="min-w-0">
+                <p className={`text-sm font-medium leading-none ${tone.label}`}>{source.label}</p>
+                <p className="mt-1 text-[11px] leading-none text-muted-foreground">{detail}</p>
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+}
+
+function healthTone(health: SourceStatus["health"]): { dot: string; label: string } {
+  switch (health) {
+    case "ok":
+      return { dot: "bg-emerald-400", label: "text-foreground" };
+    case "empty":
+      return { dot: "bg-amber-300", label: "text-foreground" };
+    case "down":
+      return { dot: "bg-rose-400", label: "text-rose-100/90" };
+    case "searching":
+      return { dot: "bg-primary", label: "text-foreground" };
+    default:
+      return { dot: "bg-foreground/25", label: "text-muted-foreground" };
+  }
+}
+
+function sourceDetail(source: SourceStatus, discovering: boolean): string {
+  if (discovering || source.health === "searching") return "Searching…";
+  if (source.health === "idle") return "Not searched yet";
+  if (source.health === "down") return "Unavailable";
+  if (source.health === "empty") return "0 jobs";
+  return `${source.fetched} jobs`;
 }
 
 function scoreClass(score: number | null): string {

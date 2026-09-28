@@ -6,6 +6,12 @@ import { FindJobsView } from "@/components/find-jobs-view";
 import { QueueView } from "@/components/queue-view";
 import { TrackerView } from "@/components/tracker-view";
 import { zonedLocalToIso } from "@/lib/dates";
+import {
+  idleSourceStatuses,
+  searchingSourceStatuses,
+  statusesFromDiscover,
+  type SourceStatus,
+} from "@/lib/sources";
 import { computeStats } from "@/lib/stats";
 import type { Application, QueueRules } from "@/lib/types";
 
@@ -23,6 +29,7 @@ export function Dashboard({ initialApplications, initialRules }: { initialApplic
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [discovering, setDiscovering] = useState(false);
+  const [sourceStatuses, setSourceStatuses] = useState<SourceStatus[]>(() => idleSourceStatuses());
 
   const load = useCallback(async () => {
     setError("");
@@ -130,6 +137,7 @@ export function Dashboard({ initialApplications, initialRules }: { initialApplic
   async function handleDiscover() {
     setDiscovering(true);
     setError("");
+    setSourceStatuses((current) => searchingSourceStatuses(current));
     try {
       const response = await fetch("/api/discover", { method: "POST" });
       const body = (await response.json()) as {
@@ -145,14 +153,11 @@ export function Dashboard({ initialApplications, initialRules }: { initialApplic
         ineligible?: number;
         notSoftware?: number;
         tooOld?: number;
-        sources?: { source: string; fetched: number; error: string | null }[];
+        sources?: { source: string; fetched: number; error: string | null; ms?: number }[];
       };
       if (!response.ok) throw new Error(body.error ?? "Discovery failed.");
+      setSourceStatuses(statusesFromDiscover(body.sources ?? []));
       await load();
-      const problems = (body.sources ?? [])
-        .filter((source) => source.error)
-        .map((source) => `${source.source}: ${source.error}`)
-        .join(" ");
       const dropped =
         (body.senior ?? 0) +
         (body.noKeyword ?? 0) +
@@ -160,10 +165,11 @@ export function Dashboard({ initialApplications, initialRules }: { initialApplic
         (body.notSoftware ?? 0) +
         (body.tooOld ?? 0);
       setNotice(
-        `Pulled ${body.pulled ?? 0} → kept ${body.applicable ?? 0} applicable (${body.autoQueued ?? 0} auto-queued, ${body.added ?? 0} new). Dropped ${dropped} (senior/off-stack/blocked/old/non-software). ${problems}`.trim(),
+        `Pulled ${body.pulled ?? 0} → kept ${body.applicable ?? 0} applicable (${body.autoQueued ?? 0} auto-queued, ${body.added ?? 0} new). Auto-dropped ${dropped}.`,
       );
       setTab("find");
     } catch (caught) {
+      setSourceStatuses(idleSourceStatuses());
       setError(caught instanceof Error ? caught.message : "Discovery failed.");
     } finally {
       setDiscovering(false);
@@ -203,6 +209,7 @@ export function Dashboard({ initialApplications, initialRules }: { initialApplic
         <FindJobsView
           applications={applications}
           rules={rules}
+          sourceStatuses={sourceStatuses}
           onPatch={handlePatch}
           onBulk={handleBulk}
           onDiscover={handleDiscover}
