@@ -1,13 +1,10 @@
-import { redirect } from "next/navigation";
 import { Dashboard } from "@/components/dashboard";
-import { isAuthed } from "@/lib/auth";
 import { DatabaseConfigError, loadDashboard } from "@/lib/db";
 import type { Application, QueueRules } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  if (!(await isAuthed())) redirect("/login");
   let applications: Application[] | null = null;
   let rules: QueueRules | null = null;
   let message = "The application history could not be loaded.";

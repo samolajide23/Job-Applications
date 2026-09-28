@@ -1,12 +1,10 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { useRouter } from "next/navigation";
 import { CandidateView } from "@/components/candidate-view";
 import type { NewRowInput } from "@/components/entry-dialogs";
 import { QueueView } from "@/components/queue-view";
 import { TrackerView } from "@/components/tracker-view";
-import { Button } from "@/components/ui/button";
 import { zonedLocalToIso } from "@/lib/dates";
 import { computeStats } from "@/lib/stats";
 import type { Application, QueueRules } from "@/lib/types";
@@ -19,7 +17,6 @@ type Payload = {
 };
 
 export function Dashboard({ initialApplications, initialRules }: { initialApplications: Application[]; initialRules: QueueRules }) {
-  const router = useRouter();
   const [tab, setTab] = useState<Tab>("tracker");
   const [applications, setApplications] = useState(initialApplications);
   const [rules, setRules] = useState(initialRules);
@@ -30,15 +27,11 @@ export function Dashboard({ initialApplications, initialRules }: { initialApplic
   const load = useCallback(async () => {
     setError("");
     const response = await fetch("/api/applications", { cache: "no-store" });
-    if (response.status === 401) {
-      router.push("/login");
-      return;
-    }
     const body = (await response.json()) as Payload & { error?: string };
     if (!response.ok) throw new Error(body.error ?? "Could not load applications.");
     setApplications(body.applications);
     setRules(body.rules);
-  }, [router]);
+  }, []);
 
   async function handlePatch(id: string, patch: Record<string, unknown>) {
     const previous = applications;
@@ -83,7 +76,7 @@ export function Dashboard({ initialApplications, initialRules }: { initialApplic
         location: input.location || null,
         notes: input.notes || null,
         score,
-        origin: input.status === "applied" ? "manual" : "manual",
+        origin: "manual",
       }),
     });
     const body = (await response.json()) as { application?: Application; error?: string };
@@ -189,26 +182,15 @@ export function Dashboard({ initialApplications, initialRules }: { initialApplic
     );
   }
 
-  async function handleLogout() {
-    await fetch("/api/auth/logout", { method: "POST" });
-    router.push("/login");
-    router.refresh();
-  }
-
   const queued = applications.filter((application) => application.status === "queued").length;
   const stats = computeStats(applications);
 
   return (
     <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-5 px-4 py-5 sm:px-6">
-      <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <p className="text-xs tracking-[0.16em] text-primary uppercase">Samuel Olajide</p>
-          <h1 className="text-2xl font-semibold tracking-tight">Job applications</h1>
-          <p className="text-sm text-muted-foreground">Dundalk, Ireland · Europe/London · discover, queue, then apply</p>
-        </div>
-        <Button type="button" variant="ghost" onClick={() => void handleLogout()}>
-          Log out
-        </Button>
+      <header>
+        <p className="text-xs tracking-[0.16em] text-primary uppercase">Samuel Olajide</p>
+        <h1 className="text-2xl font-semibold tracking-tight">Job applications</h1>
+        <p className="text-sm text-muted-foreground">Dundalk, Ireland · Europe/London · discover, queue, then apply</p>
       </header>
       <div role="tablist" aria-label="Dashboard sections" className="flex w-fit gap-1 rounded-xl bg-muted/70 p-1">
         <TabButton id="tracker" current={tab} onSelect={setTab} label="Tracker" />

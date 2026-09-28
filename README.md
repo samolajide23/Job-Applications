@@ -1,6 +1,6 @@
 # Job applications
 
-Private dashboard for Samuel Olajide (Dundalk, Ireland, Europe/London). It keeps the apply history, scores newly discovered remote roles, and holds the queue the apply agent is allowed to submit.
+Open dashboard for Samuel Olajide (Dundalk, Ireland, Europe/London). It keeps the apply history, scores newly discovered remote roles, and holds the queue the apply agent is allowed to submit. There is no login password.
 
 Discovery uses these sources, in this order:
 
@@ -17,11 +17,11 @@ Auto-queue is on by default. New roles that score ≥60, are not senior titles, 
 ```bash
 npm install
 cp .env.example .env.local
-# set DASHBOARD_PASSWORD and SYNC_TOKEN
+# optional: set SYNC_TOKEN for the apply agent
 npm run dev
 ```
 
-Open http://127.0.0.1:43123 and sign in.
+Open http://127.0.0.1:43123 — no password.
 
 Without `DATABASE_URL`, development stores data in `data/pglite` (gitignored). The seed CSV in `data/seed.csv` loads once. Later edits are kept.
 
@@ -34,15 +34,13 @@ npm run db:seed
 
 | Name | Required | Purpose |
 | --- | --- | --- |
-| `DASHBOARD_PASSWORD` | Yes | Login gate. The URL is not public. |
-| `SYNC_TOKEN` | Yes | Bearer token for the apply agent and sync. |
 | `DATABASE_URL` | Production | Neon Postgres connection string. |
+| `SYNC_TOKEN` | Optional | Bearer token for the apply agent and sync. |
 | `CRON_SECRET` | Optional | Vercel Cron calls `GET /api/discover` with this bearer token. |
 
-Set them in Vercel for Production, Preview, and Development:
+The browser UI is open (no `DASHBOARD_PASSWORD`). Set agent tokens in Vercel if you use them:
 
 ```bash
-printf '%s' "$DASHBOARD_PASSWORD" | vercel env add DASHBOARD_PASSWORD production
 printf '%s' "$SYNC_TOKEN" | vercel env add SYNC_TOKEN production
 printf '%s' "$CRON_SECRET" | vercel env add CRON_SECRET production
 ```
