@@ -12,7 +12,8 @@ const USER_AGENT =
 const IRELAND_GEO_ID = "104738515";
 
 const PAGE_SIZE = 10;
-const MAX_PAGES_PER_QUERY = 3;
+/** Keep modest — LinkedIn guest search 429s quickly from one IP. */
+const MAX_PAGES_PER_QUERY = 2;
 
 export type LinkedInPullResult = {
   jobs: DiscoveredJob[];
@@ -29,11 +30,9 @@ type SearchQuery = {
 
 const DEFAULT_QUERIES: SearchQuery[] = [
   { keywords: "software engineer", geoId: IRELAND_GEO_ID, location: "Ireland" },
-  { keywords: "python engineer", geoId: IRELAND_GEO_ID, location: "Ireland" },
-  { keywords: "typescript react", geoId: IRELAND_GEO_ID, location: "Ireland" },
+  { keywords: "python typescript", geoId: IRELAND_GEO_ID, location: "Ireland" },
   { keywords: "lead software engineer", geoId: IRELAND_GEO_ID, location: "Ireland" },
-  { keywords: "software engineer Ireland", workplace: "2" },
-  { keywords: "python typescript remote Europe", workplace: "2" },
+  { keywords: "software engineer remote Europe", workplace: "2" },
 ];
 
 function decodeHtml(value: string): string {
@@ -193,7 +192,7 @@ export async function pullLinkedIn(options?: {
           if (id) byId.set(id, job);
         }
         if (jobs.length < PAGE_SIZE) break;
-        await sleep(250);
+        await sleep(500);
       } catch (error) {
         const message = error instanceof Error ? error.message : "LinkedIn request failed";
         errors.push(`${query.keywords}: ${message}`);
