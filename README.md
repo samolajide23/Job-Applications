@@ -7,9 +7,11 @@ Discovery pulls these sources in parallel:
 | Source | API | Notes |
 | --- | --- | --- |
 | **Hiring Cafe** | `POST hiringcafe.com/api/search-jobs` | Private search; Cloudflare often blocks server hosts (fails fast after one probe) |
-| **Greenhouse** | `GET boards-api.greenhouse.io/v1/boards/{token}/jobs?content=true` | ~40 company boards; open roles kept even if first posted >14 days ago |
-| **Ashby** | `GET api.ashbyhq.com/posting-api/job-board/{org}` | ~35 company boards from apply history (Notion, Linear, Cursor, Cohere, …) |
-| **Lever** | `GET api.lever.co/v0/postings/{site}?mode=json` | Metabase + Spotify, Qonto, Palantir, and other verified Lever sites |
+| **Greenhouse** | `GET boards-api.greenhouse.io/v1/boards/{token}/jobs` | ~80 company boards (separate token list; list then detail) |
+| **Ashby** | `GET api.ashbyhq.com/posting-api/job-board/{org}` | ~60 company boards (OpenAI skipped — payload too large) |
+| **Lever** | `GET api.lever.co/v0/postings/{site}?mode=json` | ~10 verified Lever sites (Metabase, Spotify, Qonto, Palantir, …) |
+
+Greenhouse / Ashby / Lever each need their **own** company slug — they are not one shared list. Aggregators (Jobicy, Remotive, Remote OK) do not need company names.
 | **Jobicy** | `GET jobicy.com/api/v2/remote-jobs` | Europe/Ireland engineering + Python/TypeScript/React tags |
 | **Remotive** | `GET remotive.com/api/remote-jobs` | Small recent public feed; software-adjacent categories kept |
 | **Remote OK** | `GET remoteok.com/api` | Public JSON feed |

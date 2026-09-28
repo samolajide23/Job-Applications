@@ -1,56 +1,14 @@
+import { GREENHOUSE_BOARD_TOKENS } from "@/lib/ats-boards";
 import type { DiscoveredJob } from "@/lib/discover";
 import { isSoftwareRole } from "@/lib/discover";
 
-const USER_AGENT = "SamuelOlajideJobDashboard/1.0 (Ireland; job discovery for personal apply queue)";
-const LIST_CONCURRENCY = 12;
+export { GREENHOUSE_BOARD_TOKENS };
 
-/**
- * Greenhouse has no global search API — each employer has a public board token.
- * Tokens: apply history + Europe-friendly / remote-friendly engineering boards.
- */
-export const GREENHOUSE_BOARD_TOKENS = [
-  "canonical",
-  "gitlab",
-  "intercom",
-  "elastic",
-  "datadog",
-  "mozilla",
-  "twilio",
-  "vercel",
-  "nearform",
-  "fivetran",
-  "stripe",
-  "monzo",
-  "deliveroo",
-  "typeform",
-  "cloudbeds",
-  "calendly",
-  "contentful",
-  "liveperson",
-  "togetherai",
-  "anthropic",
-  "cloudflare",
-  "wise",
-  "adyen",
-  "remotecom",
-  "airbnb",
-  "dropbox",
-  "block",
-  "figma",
-  "shopify",
-  "hashicorp",
-  "speechmatics",
-  "hubspot",
-  "airtable",
-  "coinbase",
-  "duolingo",
-  "discord",
-  "reddit",
-  "asana",
-  "mongodb",
-  "databricks",
-  "tripadvisor",
-] as const;
+const USER_AGENT = "SamuelOlajideJobDashboard/1.0 (Ireland; job discovery for personal apply queue)";
+const LIST_CONCURRENCY = 16;
+const DETAIL_CONCURRENCY = 14;
+/** Cap detail fetches so mega-boards (SpaceX, etc.) stay within discover time budget. */
+const MAX_DETAILS = 500;
 
 type GreenhouseJob = {
   id: number;
@@ -131,8 +89,6 @@ export function looksObviouslyUsOnly(location: string, description = ""): boolea
   const hasUs = /\b(united states|\bu\.?s\.?a\.?\b|\bus only\b|\bu\.s\. only\b|america)\b/.test(place);
   const americasOnly = /\b(americas only|north america only|latam only|apac only)\b/.test(place);
   if (!hasUs && !americasOnly) return false;
-
-  // "Remote" + US city with no EU/worldwide allowance → skip early.
   return true;
 }
 
@@ -156,7 +112,6 @@ export function mapGreenhouseJob(value: unknown, boardToken: string): Discovered
     location,
     description: asString(record.content),
     tags: [...departments, "Greenhouse", boardToken],
-    // Keep first_published for display; prepareDiscovery does not age-cut Greenhouse.
     postedAt: postedIso(record.first_published) ?? postedIso(record.updated_at),
     salaryText: null,
     level: null,
@@ -165,9 +120,9 @@ export function mapGreenhouseJob(value: unknown, boardToken: string): Discovered
 
 async function listBoardJobs(token: string): Promise<{ token: string; jobs: GreenhouseJob[]; error: string | null }> {
   try {
-    // content=true returns descriptions in one round-trip — no per-job detail fetches.
+    // Lightweight list first — detail fetch only for software / non-US candidates.
     const payload = await fetchJson(
-      `https://boards-api.greenhouse.io/v1/boards/${encodeURIComponent(token)}/jobs?content=true`,
+      `https://boards-api.greenhouse.io/v1/boards/${encodeURIComponent(token)}/jobs`,
     );
     const record = asRecord(payload);
     const jobs = Array.isArray(record?.jobs) ? (record.jobs as GreenhouseJob[]) : [];
@@ -181,6 +136,17 @@ async function listBoardJobs(token: string): Promise<{ token: string; jobs: Gree
   }
 }
 
+async function fetchJobDetail(token: string, id: number): Promise<GreenhouseJob | null> {
+  try {
+    const payload = await fetchJson(
+      `https://boards-api.greenhouse.io/v1/boards/${encodeURIComponent(token)}/jobs/${id}`,
+    );
+    return asRecord(payload) as unknown as GreenhouseJob;
+  } catch {
+    return null;
+  }
+}
+
 export type GreenhousePullResult = {
   jobs: DiscoveredJob[];
   boards: number;
@@ -190,24 +156,41 @@ export type GreenhousePullResult = {
 };
 
 export async function pullGreenhouse(_options?: { postedWithinDays?: number }): Promise<GreenhousePullResult> {
-  // Board listings are currently open — do not drop by first_published age here.
   const listed = await mapPool([...GREENHOUSE_BOARD_TOKENS], LIST_CONCURRENCY, listBoardJobs);
   const errors = listed.filter((board) => board.error).map((board) => `${board.token}: ${board.error}`);
 
-  const jobs: DiscoveredJob[] = [];
-  const seen = new Set<string>();
+  const candidates: { token: string; job: GreenhouseJob }[] = [];
   for (const board of listed) {
     for (const job of board.jobs) {
       const title = asString(job.title);
       if (!title || !isSoftwareRole(title)) continue;
       const location = locationText(job);
-      const description = asString(job.content);
-      if (looksObviouslyUsOnly(location, description)) continue;
-      const mapped = mapGreenhouseJob(job, board.token);
-      if (!mapped || seen.has(mapped.url)) continue;
-      seen.add(mapped.url);
-      jobs.push(mapped);
+      if (looksObviouslyUsOnly(location)) continue;
+      candidates.push({ token: board.token, job });
     }
+  }
+
+  candidates.sort((a, b) => {
+    const left = postedIso(a.job.first_published) ?? postedIso(a.job.updated_at) ?? "";
+    const right = postedIso(b.job.first_published) ?? postedIso(b.job.updated_at) ?? "";
+    return right.localeCompare(left);
+  });
+
+  const toDetail = candidates.slice(0, MAX_DETAILS);
+  const details = await mapPool(toDetail, DETAIL_CONCURRENCY, async (item) => {
+    const detail = await fetchJobDetail(item.token, item.job.id);
+    return { token: item.token, job: detail ?? item.job };
+  });
+
+  const jobs: DiscoveredJob[] = [];
+  const seen = new Set<string>();
+  for (const item of details) {
+    const mapped = mapGreenhouseJob(item.job, item.token);
+    if (!mapped || seen.has(mapped.url)) continue;
+    // Re-check with description now that we have content.
+    if (looksObviouslyUsOnly(mapped.location ?? "", mapped.description)) continue;
+    seen.add(mapped.url);
+    jobs.push(mapped);
   }
 
   jobs.sort((a, b) => (b.postedAt ?? "").localeCompare(a.postedAt ?? ""));
@@ -216,7 +199,7 @@ export async function pullGreenhouse(_options?: { postedWithinDays?: number }): 
     jobs,
     boards: GREENHOUSE_BOARD_TOKENS.length,
     listed: listed.reduce((sum, board) => sum + board.jobs.length, 0),
-    detailed: jobs.length,
+    detailed: details.length,
     errors,
   };
 }

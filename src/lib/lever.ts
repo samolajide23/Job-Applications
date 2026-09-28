@@ -1,24 +1,12 @@
+import { LEVER_BOARD_TOKENS } from "@/lib/ats-boards";
 import type { DiscoveredJob } from "@/lib/discover";
 import { isSoftwareRole } from "@/lib/discover";
 import { looksObviouslyUsOnly } from "@/lib/greenhouse";
 
-const USER_AGENT = "SamuelOlajideJobDashboard/1.0 (Ireland; job discovery for personal apply queue)";
-const LIST_CONCURRENCY = 6;
+export { LEVER_BOARD_TOKENS };
 
-/**
- * Lever public postings API — one site slug per employer.
- * Includes Metabase from apply history plus verified Europe-friendly boards.
- */
-export const LEVER_BOARD_TOKENS = [
-  "metabase",
-  "spotify",
-  "qonto",
-  "palantir",
-  "activecampaign",
-  "wealthfront",
-  "theathletic",
-  "gopuff",
-] as const;
+const USER_AGENT = "SamuelOlajideJobDashboard/1.0 (Ireland; job discovery for personal apply queue)";
+const LIST_CONCURRENCY = 8;
 
 type LeverCategories = {
   commitment?: string;

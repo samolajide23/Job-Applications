@@ -1,54 +1,12 @@
+import { ASHBY_BOARD_TOKENS } from "@/lib/ats-boards";
 import type { DiscoveredJob } from "@/lib/discover";
 import { isSoftwareRole } from "@/lib/discover";
 import { looksObviouslyUsOnly } from "@/lib/greenhouse";
 
-const USER_AGENT = "SamuelOlajideJobDashboard/1.0 (Ireland; job discovery for personal apply queue)";
-const LIST_CONCURRENCY = 8;
+export { ASHBY_BOARD_TOKENS };
 
-/**
- * Ashby public posting API — one board slug per employer.
- * Tokens from Samuel's apply history (OpenAI omitted: ~13MB payload slows discover).
- */
-export const ASHBY_BOARD_TOKENS = [
-  "ashby",
-  "notion",
-  "linear",
-  "ramp",
-  "1password",
-  "airbyte",
-  "alchemy",
-  "attio",
-  "buffer",
-  "clickhouse",
-  "clickup",
-  "coder",
-  "cognition",
-  "cohere",
-  "cursor",
-  "deepgram",
-  "deepl",
-  "docker",
-  "dune",
-  "elevenlabs",
-  "enode",
-  "exa",
-  "fireworks",
-  "granola",
-  "incident",
-  "langchain",
-  "lovable",
-  "mazedesign",
-  "n8n",
-  "neon",
-  "oyster",
-  "paddle",
-  "cerebras",
-  "bubble",
-  "blp-digital",
-  "infisical",
-  "kong",
-  "lemlist",
-] as const;
+const USER_AGENT = "SamuelOlajideJobDashboard/1.0 (Ireland; job discovery for personal apply queue)";
+const LIST_CONCURRENCY = 10;
 
 type AshbySecondary = {
   location?: string;
