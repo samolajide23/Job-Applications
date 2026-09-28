@@ -107,6 +107,15 @@ export function normalizeUrl(raw: string): string | null {
     for (const key of [...url.searchParams.keys()]) {
       if (/^(utm_|ref$|source$|gh_src)/i.test(key)) url.searchParams.delete(key);
     }
+    // Canonical LinkedIn job URLs (ie./uk. hosts + tracking query → www + id).
+    if (url.hostname.endsWith("linkedin.com")) {
+      const view = url.pathname.match(/\/jobs\/view\/(?:[^/]+-)?(\d+)/);
+      if (view?.[1]) {
+        url.hostname = "www.linkedin.com";
+        url.pathname = `/jobs/view/${view[1]}`;
+        url.search = "";
+      }
+    }
     return url.toString();
   } catch {
     return null;

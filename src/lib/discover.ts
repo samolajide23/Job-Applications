@@ -64,14 +64,16 @@ function sourceRank(source: string): number {
       return 1;
     case "Lever":
       return 2;
-    case "HiringCafe":
+    case "LinkedIn":
       return 3;
-    case "Jobicy":
+    case "HiringCafe":
       return 4;
-    case "Remotive":
+    case "Jobicy":
       return 5;
-    case "RemoteOK":
+    case "Remotive":
       return 6;
+    case "RemoteOK":
+      return 7;
     default:
       return 9;
   }

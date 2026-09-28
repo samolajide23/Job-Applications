@@ -10,8 +10,9 @@ Discovery pulls these sources in parallel:
 | **Greenhouse** | `GET boards-api.greenhouse.io/v1/boards/{token}/jobs` | ~80 company boards (separate token list; list then detail) |
 | **Ashby** | `GET api.ashbyhq.com/posting-api/job-board/{org}` | ~60 company boards (OpenAI skipped — payload too large) |
 | **Lever** | `GET api.lever.co/v0/postings/{site}?mode=json` | ~10 verified Lever sites (Metabase, Spotify, Qonto, Palantir, …) |
+| **LinkedIn** | `GET linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search` | Public guest job cards (Ireland + remote Europe queries); may rate-limit or challenge some hosts |
 
-Greenhouse / Ashby / Lever each need their **own** company slug — they are not one shared list. Aggregators (Jobicy, Remotive, Remote OK) do not need company names.
+Greenhouse / Ashby / Lever each need their **own** company slug — they are not one shared list. Aggregators (Jobicy, Remotive, Remote OK, LinkedIn guest search) do not need company names.
 | **Jobicy** | `GET jobicy.com/api/v2/remote-jobs` | Europe/Ireland engineering + Python/TypeScript/React tags |
 | **Remotive** | `GET remotive.com/api/remote-jobs` | Small recent public feed; software-adjacent categories kept |
 | **Remote OK** | `GET remoteok.com/api` | Public JSON feed |

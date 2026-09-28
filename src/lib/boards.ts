@@ -8,6 +8,7 @@ import {
 import { pullGreenhouse } from "@/lib/greenhouse";
 import { pullHiringCafe } from "@/lib/hiring-cafe";
 import { pullLever } from "@/lib/lever";
+import { pullLinkedIn } from "@/lib/linkedin";
 
 export type BoardResult = {
   source: string;
@@ -81,6 +82,16 @@ export async function pullBoards(options?: { postedWithinDays?: number }): Promi
       source: "Lever",
       run: async () => {
         const result = await pullLever();
+        if (result.errors.length > 0 && result.jobs.length === 0) {
+          throw new Error(result.errors.slice(0, 3).join("; "));
+        }
+        return result.jobs;
+      },
+    },
+    {
+      source: "LinkedIn",
+      run: async () => {
+        const result = await pullLinkedIn({ postedWithinDays: days });
         if (result.errors.length > 0 && result.jobs.length === 0) {
           throw new Error(result.errors.slice(0, 3).join("; "));
         }
