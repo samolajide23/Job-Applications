@@ -98,7 +98,7 @@ test("marks US-only and Ceriga as ineligible and senior titles to skip", () => {
   assert.equal(senior.seniorityFlag, "senior_skip");
 });
 
-test("auto-queues an eligible match and drops US-only roles", () => {
+test("auto-filters to applicable roles and auto-queues strong matches", () => {
   const prepared = prepareDiscovery(
     [
       {
@@ -125,11 +125,38 @@ test("auto-queues an eligible match and drops US-only roles", () => {
         salaryText: null,
         level: null,
       },
+      {
+        url: "https://example.com/senior",
+        company: "Acme",
+        title: "Senior Backend Engineer",
+        source: "Jobicy",
+        location: "Europe",
+        description: "Python TypeScript",
+        tags: ["python"],
+        postedAt: "2026-09-23T00:00:00.000Z",
+        salaryText: null,
+        level: "Senior",
+      },
+      {
+        url: "https://example.com/sales",
+        company: "Acme",
+        title: "Account Executive",
+        source: "RemoteOK",
+        location: "Remote",
+        description: "Sell software",
+        tags: [],
+        postedAt: "2026-09-23T00:00:00.000Z",
+        salaryText: null,
+        level: null,
+      },
     ],
     { ...DEFAULT_RULES, autoQueue: true },
     new Date("2026-09-24T12:00:00.000Z"),
   );
+  assert.equal(prepared.pulled, 4);
   assert.equal(prepared.ineligible, 1);
+  assert.equal(prepared.senior, 1);
+  assert.equal(prepared.notSoftware, 1);
   assert.equal(prepared.accepted.length, 1);
   assert.equal(prepared.accepted[0]?.status, "queued");
 });

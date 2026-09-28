@@ -38,6 +38,7 @@ async function runDiscovery() {
   const inserted = new Set(await insertNew(rows));
   const added = prepared.accepted.filter((job) => inserted.has(job.url));
   const promoted = await promoteQueueMatches();
+  const autoQueuedNew = added.filter((job) => job.status === "queued").length;
   return {
     ok: true,
     sources: boards.map((board) => ({
@@ -45,12 +46,23 @@ async function runDiscovery() {
       fetched: board.fetched,
       error: board.error,
     })),
+    pulled: prepared.pulled,
+    applicable: prepared.accepted.length,
     added: added.length,
     alreadyTracked: prepared.accepted.length - added.length,
+    skipped: {
+      ineligible: prepared.ineligible,
+      notSoftware: prepared.notSoftware,
+      tooOld: prepared.tooOld,
+      senior: prepared.senior,
+      noKeyword: prepared.noKeyword,
+    },
     ineligible: prepared.ineligible,
     notSoftware: prepared.notSoftware,
     tooOld: prepared.tooOld,
-    autoQueued: added.filter((job) => job.status === "queued").length + promoted,
+    senior: prepared.senior,
+    noKeyword: prepared.noKeyword,
+    autoQueued: autoQueuedNew + promoted,
     promoted,
   };
 }

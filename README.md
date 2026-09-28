@@ -10,7 +10,7 @@ Discovery uses these sources, in this order:
 - **Remotive** — software-dev, data, and devops feeds
 - **Remote OK** — public JSON feed
 
-Auto-queue is on by default. New roles that score ≥60, are not senior titles, are not geo-blocked (plain Remote / unknown UK still pass), and match at least one keyword (AI, LLM, Python, full-stack, …) land in **Queue**. Already tracked URLs are never overwritten.
+On each search, boards return hundreds of listings. We **auto-filter** to applicable roles only (software, not senior, not geo-blocked, recent, stack keywords). Among those, score ≥60 goes straight to **Queue**; the rest stay under Find jobs for a quick review. Already tracked URLs are never overwritten.
 
 ## Local
 
@@ -96,7 +96,7 @@ curl -X POST "$APP_URL/api/discover" \
 ## What the screens do
 
 - **Tracker** — seeded history plus anything already applied, skipped, or blocked. KPIs, source mix, last 30 days in Europe/London, search, and inline status, score, location, and notes.
-- **Find jobs** — browse newly found roles. Filter with keywords, hide senior/blocked locations, then queue or pass. Extra filters (source, score, auto-queue defaults) sit under More filters.
+- **Find jobs** — applicable roles after auto-filter. Score 60+ is already queued; lower scores wait for Queue or Pass. Search box only — no manual filter toggles.
 - **Queue** — roles the agent should apply to.
 
 Response rate is `(rejected + interview + final interview + offer + recruiter contacted) / submitted`. Submitted means applied plus later pipeline statuses. Skipped, blocked, needs input, and candidates are not in that denominator. The Applied card is only the current `applied` status.

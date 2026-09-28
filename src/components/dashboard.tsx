@@ -134,11 +134,17 @@ export function Dashboard({ initialApplications, initialRules }: { initialApplic
       const response = await fetch("/api/discover", { method: "POST" });
       const body = (await response.json()) as {
         error?: string;
+        pulled?: number;
+        applicable?: number;
         added?: number;
         alreadyTracked?: number;
         autoQueued?: number;
         promoted?: number;
+        senior?: number;
+        noKeyword?: number;
         ineligible?: number;
+        notSoftware?: number;
+        tooOld?: number;
         sources?: { source: string; fetched: number; error: string | null }[];
       };
       if (!response.ok) throw new Error(body.error ?? "Discovery failed.");
@@ -147,8 +153,14 @@ export function Dashboard({ initialApplications, initialRules }: { initialApplic
         .filter((source) => source.error)
         .map((source) => `${source.source}: ${source.error}`)
         .join(" ");
+      const dropped =
+        (body.senior ?? 0) +
+        (body.noKeyword ?? 0) +
+        (body.ineligible ?? 0) +
+        (body.notSoftware ?? 0) +
+        (body.tooOld ?? 0);
       setNotice(
-        `Added ${body.added ?? 0} roles (${body.autoQueued ?? 0} auto-queued, ${body.alreadyTracked ?? 0} already tracked, ${body.ineligible ?? 0} ineligible skipped). ${problems}`.trim(),
+        `Pulled ${body.pulled ?? 0} → kept ${body.applicable ?? 0} applicable (${body.autoQueued ?? 0} auto-queued, ${body.added ?? 0} new). Dropped ${dropped} (senior/off-stack/blocked/old/non-software). ${problems}`.trim(),
       );
       setTab("find");
     } catch (caught) {
@@ -156,30 +168,6 @@ export function Dashboard({ initialApplications, initialRules }: { initialApplic
     } finally {
       setDiscovering(false);
     }
-  }
-
-  async function handleSaveRules(next: QueueRules) {
-    const response = await fetch("/api/rules", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(next),
-    });
-    const body = (await response.json()) as { rules?: QueueRules; error?: string };
-    if (!response.ok || !body.rules) {
-      setError(body.error ?? "Could not save rules.");
-      return;
-    }
-    setRules(body.rules);
-    try {
-      await load();
-    } catch {
-      /* list refresh is best-effort after a successful save */
-    }
-    setNotice(
-      next.autoQueue
-        ? "Auto-queue is on. Matching discovered roles were moved to the apply queue."
-        : "Queue rules saved.",
-    );
   }
 
   const queued = applications.filter((application) => application.status === "queued").length;
@@ -218,7 +206,6 @@ export function Dashboard({ initialApplications, initialRules }: { initialApplic
           onPatch={handlePatch}
           onBulk={handleBulk}
           onDiscover={handleDiscover}
-          onSaveRules={handleSaveRules}
           discovering={discovering}
         />
       ) : (

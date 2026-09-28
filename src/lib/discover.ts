@@ -33,9 +33,13 @@ export type PreparedJob = {
 
 export type PrepareResult = {
   accepted: PreparedJob[];
+  /** Raw board listings considered before applicability cuts. */
+  pulled: number;
   ineligible: number;
   notSoftware: number;
   tooOld: number;
+  senior: number;
+  noKeyword: number;
 };
 
 const SOFTWARE_TITLE =
@@ -45,6 +49,10 @@ export function isSoftwareRole(title: string, tags: string[] = []): boolean {
   return SOFTWARE_TITLE.test(`${title} ${tags.join(" ")}`);
 }
 
+/**
+ * Keep only applicable roles: software, recent, not geo-blocked, not senior,
+ * and matching stack keywords. Score ≥ minScore goes straight to the apply queue.
+ */
 export function prepareDiscovery(
   jobs: DiscoveredJob[],
   rules: QueueRules,
@@ -53,14 +61,18 @@ export function prepareDiscovery(
   const sorted = [...jobs].sort((a, b) => (b.postedAt ?? "").localeCompare(a.postedAt ?? ""));
   const seen = new Set<string>();
   const accepted: PreparedJob[] = [];
+  let pulled = 0;
   let ineligible = 0;
   let notSoftware = 0;
   let tooOld = 0;
+  let senior = 0;
+  let noKeyword = 0;
 
   for (const job of sorted) {
     const url = normalizeUrl(job.url);
     if (!url || seen.has(url)) continue;
     if (!job.company.trim() || !job.title.trim()) continue;
+    pulled += 1;
     if (!isSoftwareRole(job.title, job.tags)) {
       notSoftware += 1;
       continue;
@@ -87,8 +99,20 @@ export function prepareDiscovery(
       ineligible += 1;
       continue;
     }
-    seen.add(url);
+    if (rules.excludeSenior && breakdown.seniorityFlag === "senior_skip") {
+      senior += 1;
+      continue;
+    }
     const haystack = `${job.title}\n${job.company}\n${job.tags.join(" ")}\n${description}\n${job.location ?? ""}`;
+    if (rules.keywords.length > 0) {
+      const lower = haystack.toLowerCase();
+      const matched = rules.keywords.some((keyword) => lower.includes(keyword.toLowerCase()));
+      if (!matched) {
+        noKeyword += 1;
+        continue;
+      }
+    }
+    seen.add(url);
     accepted.push({
       url,
       company: job.company.trim().slice(0, 200),
@@ -111,7 +135,7 @@ export function prepareDiscovery(
     });
   }
 
-  return { accepted, ineligible, notSoftware, tooOld };
+  return { accepted, pulled, ineligible, notSoftware, tooOld, senior, noKeyword };
 }
 
 function asRecord(value: unknown): Record<string, unknown> | null {
