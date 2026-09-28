@@ -34,6 +34,7 @@ test("seed stats match the logged history", () => {
   assert.equal(stats.blocked, 69);
   assert.equal(stats.needsInput, 1);
   assert.equal(stats.interviews, 0);
+  assert.equal(stats.moving, 0);
   assert.equal(stats.offers, 0);
   assert.equal(stats.responseRate, 0);
   assert.equal(stats.submitted, 164);

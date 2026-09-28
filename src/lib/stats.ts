@@ -17,6 +17,11 @@ export function computeStats(applications: Application[], now: Date = new Date()
     RESPONSE_STATUSES.includes(application.status),
   ).length;
   const interviews = count("interview") + count("final_interview");
+  const moving =
+    count("assessment") +
+    count("recruiter_contacted") +
+    count("interview") +
+    count("final_interview");
   const keys = last30DayKeys(now);
   const keySet = new Set(keys);
   const dayCounts = new Map(keys.map((key) => [key, 0]));
@@ -37,6 +42,7 @@ export function computeStats(applications: Application[], now: Date = new Date()
     responses,
     responseRate: submitted === 0 ? null : responses / submitted,
     interviews,
+    moving,
     offers: count("offer"),
     blocked: count("blocked"),
     skipped: count("skipped"),

@@ -67,6 +67,8 @@ export type Stats = {
   responses: number;
   responseRate: number | null;
   interviews: number;
+  /** Assessment, recruiter, interview, or final — actively progressing. */
+  moving: number;
   offers: number;
   blocked: number;
   skipped: number;

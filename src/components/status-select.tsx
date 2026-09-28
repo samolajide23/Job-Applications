@@ -22,13 +22,20 @@ export function StatusSelect({
   value,
   label,
   disabled,
+  trackerOnly = false,
   onChange,
 }: {
   value: Status;
   label: string;
   disabled?: boolean;
+  /** Hide Find jobs / Queue statuses when editing tracker rows. */
+  trackerOnly?: boolean;
   onChange: (status: Status) => void;
 }) {
+  const groups = trackerOnly
+    ? STATUS_GROUPS.filter((group) => group.label !== "Review")
+    : STATUS_GROUPS;
+
   return (
     <select
       aria-label={label}
@@ -37,7 +44,7 @@ export function StatusSelect({
       onChange={(event) => onChange(event.target.value as Status)}
       className={`h-8 max-w-full rounded-lg border border-transparent px-2 text-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50 ${TONE[value]}`}
     >
-      {STATUS_GROUPS.map((group) => (
+      {groups.map((group) => (
         <optgroup key={group.label} label={group.label}>
           {group.statuses.map((status) => (
             <option key={status} value={status}>

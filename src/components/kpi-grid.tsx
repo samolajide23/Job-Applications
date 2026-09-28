@@ -1,4 +1,3 @@
-import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import type { Stats } from "@/lib/types";
 
 function percent(rate: number | null): string {
@@ -8,30 +7,36 @@ function percent(rate: number | null): string {
 
 export function KpiGrid({ stats }: { stats: Stats }) {
   const cards = [
-    { label: "Total", value: String(stats.total), hint: "Logged applications" },
-    { label: "Applied", value: String(stats.applied), hint: "Still waiting" },
     {
-      label: "Response rate",
-      value: percent(stats.responseRate),
-      hint: `${stats.responses} of ${stats.submitted} submitted`,
+      label: "Waiting",
+      value: String(stats.applied),
+      hint: "Applied, no reply yet",
     },
-    { label: "Interviews", value: String(stats.interviews), hint: "Including finals" },
-    { label: "Offers", value: String(stats.offers), hint: "Open offers" },
-    { label: "Blocked", value: String(stats.blocked), hint: "Captcha, OTP, walls" },
-    { label: "Skipped", value: String(stats.skipped), hint: "Out of scope" },
-    { label: "Needs input", value: String(stats.needsInput), hint: "Waiting on you" },
+    {
+      label: "Moving",
+      value: String(stats.moving),
+      hint: "Interview, assessment, recruiter",
+    },
+    {
+      label: "Offers",
+      value: String(stats.offers),
+      hint: "Open offers",
+    },
+    {
+      label: "Reply rate",
+      value: percent(stats.responseRate),
+      hint: `${stats.responses} replies / ${stats.submitted} sent`,
+    },
   ];
 
   return (
-    <section aria-label="Application totals" className="grid grid-cols-2 gap-3 md:grid-cols-4">
+    <section aria-label="Application summary" className="grid grid-cols-2 gap-3 md:grid-cols-4">
       {cards.map((card) => (
-        <Card key={card.label} size="sm" className="bg-card/80">
-          <CardHeader>
-            <CardDescription>{card.label}</CardDescription>
-            <CardTitle className="font-mono text-2xl tabular-nums tracking-tight">{card.value}</CardTitle>
-            <p className="text-xs text-muted-foreground">{card.hint}</p>
-          </CardHeader>
-        </Card>
+        <div key={card.label} className="rounded-xl px-4 py-3 ring-1 ring-foreground/10">
+          <p className="text-xs text-muted-foreground">{card.label}</p>
+          <p className="mt-1 font-mono text-2xl tabular-nums tracking-tight">{card.value}</p>
+          <p className="mt-0.5 text-xs text-muted-foreground">{card.hint}</p>
+        </div>
       ))}
     </section>
   );
