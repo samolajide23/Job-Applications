@@ -2,6 +2,7 @@ import { failureResponse, jsonError, unauthorized } from "@/lib/api";
 import { authorize } from "@/lib/auth";
 import { updateApplication } from "@/lib/db";
 import type { Patch } from "@/lib/repository";
+import { slimApplication } from "@/lib/slim";
 import { isStatus } from "@/lib/statuses";
 
 export const runtime = "nodejs";
@@ -48,7 +49,7 @@ export async function PATCH(
     if (Object.keys(patch).length === 0) return jsonError("No fields to update.", 400);
     const application = await updateApplication(id, patch);
     if (!application) return jsonError("Application not found.", 404);
-    return Response.json({ ok: true, application });
+    return Response.json({ ok: true, application: slimApplication(application) });
   } catch (error) {
     return failureResponse(error);
   }

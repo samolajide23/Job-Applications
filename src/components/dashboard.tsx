@@ -1,10 +1,9 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import dynamic from "next/dynamic";
+import { useCallback, useEffect, useState } from "react";
 import type { NewRowInput } from "@/components/entry-dialogs";
-import { FindJobsView } from "@/components/find-jobs-view";
-import { QueueView } from "@/components/queue-view";
-import { TrackerView } from "@/components/tracker-view";
+import { Skeleton } from "@/components/ui/skeleton";
 import { zonedLocalToIso } from "@/lib/dates";
 import {
   idleSourceStatuses,
@@ -15,6 +14,19 @@ import {
 import { computeStats } from "@/lib/stats";
 import type { Application, QueueRules } from "@/lib/types";
 
+const TrackerView = dynamic(
+  () => import("@/components/tracker-view").then((module) => module.TrackerView),
+  { loading: () => <PanelSkeleton /> },
+);
+const FindJobsView = dynamic(
+  () => import("@/components/find-jobs-view").then((module) => module.FindJobsView),
+  { loading: () => <PanelSkeleton /> },
+);
+const QueueView = dynamic(
+  () => import("@/components/queue-view").then((module) => module.QueueView),
+  { loading: () => <PanelSkeleton /> },
+);
+
 type Tab = "tracker" | "find" | "queue";
 
 type Payload = {
@@ -22,9 +34,9 @@ type Payload = {
   rules: QueueRules;
 };
 
-export function Dashboard({ initialApplications, initialRules }: { initialApplications: Application[]; initialRules: QueueRules }) {
+export function Dashboard({ initialRules }: { initialRules: QueueRules }) {
   const [tab, setTab] = useState<Tab>("tracker");
-  const [applications, setApplications] = useState(initialApplications);
+  const [applications, setApplications] = useState<Application[] | null>(null);
   const [rules, setRules] = useState(initialRules);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
@@ -40,11 +52,25 @@ export function Dashboard({ initialApplications, initialRules }: { initialApplic
     setRules(body.rules);
   }, []);
 
+  useEffect(() => {
+    void load().catch((caught: unknown) => {
+      setError(caught instanceof Error ? caught.message : "Could not load applications.");
+      setApplications([]);
+    });
+  }, [load]);
+
   async function handlePatch(id: string, patch: Record<string, unknown>) {
+    if (!applications) return;
     const previous = applications;
     setApplications((current) =>
-      current.map((application) =>
-        application.id === id ? { ...application, ...patch, status: (patch.status as Application["status"]) ?? application.status } : application,
+      (current ?? []).map((application) =>
+        application.id === id
+          ? {
+              ...application,
+              ...patch,
+              status: (patch.status as Application["status"]) ?? application.status,
+            }
+          : application,
       ),
     );
     const response = await fetch(`/api/applications/${id}`, {
@@ -59,7 +85,9 @@ export function Dashboard({ initialApplications, initialRules }: { initialApplic
       setError(body.error ?? "Could not save that change.");
       return;
     }
-    setApplications((current) => current.map((application) => (application.id === id ? saved : application)));
+    setApplications((current) =>
+      (current ?? []).map((application) => (application.id === id ? saved : application)),
+    );
     setError("");
   }
 
@@ -90,7 +118,10 @@ export function Dashboard({ initialApplications, initialRules }: { initialApplic
     const saved = body.application;
     if (!response.ok || !saved) throw new Error(body.error ?? "Could not save that role.");
     setApplications((current) => {
-      const rest = current.filter((application) => application.id !== saved.id && application.url !== saved.url);
+      const list = current ?? [];
+      const rest = list.filter(
+        (application) => application.id !== saved.id && application.url !== saved.url,
+      );
       return [saved, ...rest];
     });
     setNotice(`Saved ${input.company}.`);
@@ -111,7 +142,9 @@ export function Dashboard({ initialApplications, initialRules }: { initialApplic
     };
     if (!response.ok) throw new Error(body.error ?? "Import failed.");
     await load();
-    const problem = body.errors?.[0] ? ` First issue on row ${body.errors[0].row}: ${body.errors[0].message}` : "";
+    const problem = body.errors?.[0]
+      ? ` First issue on row ${body.errors[0].row}: ${body.errors[0].message}`
+      : "";
     return `Imported ${body.imported ?? 0} (${body.created ?? 0} new, ${body.updated ?? 0} updated).${problem}`;
   }
 
@@ -176,20 +209,23 @@ export function Dashboard({ initialApplications, initialRules }: { initialApplic
     }
   }
 
-  const queued = applications.filter((application) => application.status === "queued").length;
-  const stats = computeStats(applications);
+  const queued = (applications ?? []).filter((application) => application.status === "queued").length;
+  const stats = applications ? computeStats(applications) : null;
+  const loading = applications === null;
 
   return (
     <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-5 px-4 py-5 sm:px-6">
       <header>
         <p className="text-xs tracking-[0.16em] text-primary uppercase">Samuel Olajide</p>
         <h1 className="text-2xl font-semibold tracking-tight">Job applications</h1>
-        <p className="text-sm text-muted-foreground">Dundalk, Ireland · Europe/London · find jobs, queue, then apply</p>
+        <p className="text-sm text-muted-foreground">
+          Dundalk, Ireland · Europe/London · find jobs, queue, then apply
+        </p>
       </header>
       <div role="tablist" aria-label="Dashboard sections" className="flex w-fit gap-1 rounded-xl bg-muted/70 p-1">
         <TabButton id="tracker" current={tab} onSelect={setTab} label="Tracker" />
         <TabButton id="find" current={tab} onSelect={setTab} label="Find jobs" />
-        <TabButton id="queue" current={tab} onSelect={setTab} label="Queue" count={queued} />
+        <TabButton id="queue" current={tab} onSelect={setTab} label="Queue" count={loading ? undefined : queued} />
       </div>
       {error ? (
         <p className="rounded-lg bg-destructive/15 px-3 py-2 text-sm text-red-100" role="alert">
@@ -197,7 +233,9 @@ export function Dashboard({ initialApplications, initialRules }: { initialApplic
         </p>
       ) : null}
       {notice ? <p className="text-sm text-muted-foreground">{notice}</p> : null}
-      {tab === "tracker" ? (
+      {loading || !stats ? (
+        <PanelSkeleton />
+      ) : tab === "tracker" ? (
         <TrackerView
           applications={applications}
           stats={stats}
@@ -218,6 +256,20 @@ export function Dashboard({ initialApplications, initialRules }: { initialApplic
       ) : (
         <QueueView applications={applications} onPatch={handlePatch} />
       )}
+    </div>
+  );
+}
+
+function PanelSkeleton() {
+  return (
+    <div className="grid gap-4" aria-busy="true" aria-label="Loading applications">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+        {Array.from({ length: 4 }, (_, index) => (
+          <Skeleton key={index} className="h-24 rounded-xl" />
+        ))}
+      </div>
+      <Skeleton className="h-10 w-full max-w-md rounded-lg" />
+      <Skeleton className="h-64 w-full rounded-xl" />
     </div>
   );
 }

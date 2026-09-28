@@ -4,10 +4,13 @@ import { useMemo, useState } from "react";
 import { AddDialog, ImportDialog, type NewRowInput } from "@/components/entry-dialogs";
 import { KpiGrid } from "@/components/kpi-grid";
 import { StatusSelect } from "@/components/status-select";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { formatLondonDay } from "@/lib/dates";
 import { STATUS_LABELS, isTrackerStatus, type Status } from "@/lib/statuses";
 import type { Application, Stats } from "@/lib/types";
+
+const PAGE_SIZE = 60;
 
 type Bucket = "all" | "waiting" | "moving" | "offers" | "closed" | "stuck";
 
@@ -41,6 +44,7 @@ export function TrackerView({
   const [query, setQuery] = useState("");
   const [bucket, setBucket] = useState<Bucket>("all");
   const [newestFirst, setNewestFirst] = useState(true);
+  const [limit, setLimit] = useState(PAGE_SIZE);
 
   const bucketCounts = useMemo(() => {
     const counts: Record<Bucket, number> = {
@@ -75,6 +79,8 @@ export function TrackerView({
     });
 
   const monthTotal = stats.last30Days.reduce((sum, day) => sum + day.count, 0);
+  const paged = visible.slice(0, limit);
+  const remaining = visible.length - paged.length;
 
   return (
     <div className="grid gap-5">
@@ -112,7 +118,10 @@ export function TrackerView({
                 type="button"
                 role="tab"
                 aria-selected={selected}
-                onClick={() => setBucket(item.id)}
+                onClick={() => {
+                  setBucket(item.id);
+                  setLimit(PAGE_SIZE);
+                }}
                 className={`rounded-lg px-3 py-1.5 text-sm ${
                   selected
                     ? "bg-foreground text-background"
@@ -129,7 +138,10 @@ export function TrackerView({
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <Input
             value={query}
-            onChange={(event) => setQuery(event.target.value)}
+            onChange={(event) => {
+              setQuery(event.target.value);
+              setLimit(PAGE_SIZE);
+            }}
             placeholder="Search company or role"
             aria-label="Search applications"
             className="sm:max-w-sm"
@@ -142,8 +154,8 @@ export function TrackerView({
             {newestFirst ? "Newest first" : "Oldest first"}
           </button>
           <p className="text-xs text-muted-foreground sm:ml-auto">
-            Showing {visible.length}
-            {visible.length !== tracked.length ? ` of ${tracked.length}` : ""}
+            Showing {Math.min(limit, visible.length)}
+            {visible.length !== tracked.length ? ` of ${visible.length}` : ` of ${tracked.length}`}
           </p>
         </div>
       </div>
@@ -157,7 +169,7 @@ export function TrackerView({
       ) : (
         <>
           <ul className="hidden divide-y divide-border/70 rounded-xl ring-1 ring-foreground/10 md:block">
-            {visible.map((application) => (
+            {paged.map((application) => (
               <li
                 key={application.id}
                 className="grid grid-cols-[minmax(0,1.6fr)_10rem_7rem_minmax(0,1fr)_auto] items-center gap-3 px-4 py-3"
@@ -199,7 +211,7 @@ export function TrackerView({
           </ul>
 
           <ul className="grid gap-3 md:hidden">
-            {visible.map((application) => (
+            {paged.map((application) => (
               <li key={application.id} className="rounded-xl p-3 ring-1 ring-foreground/10">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
@@ -242,6 +254,18 @@ export function TrackerView({
               </li>
             ))}
           </ul>
+          {remaining > 0 ? (
+            <div className="flex justify-center">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setLimit((current) => current + PAGE_SIZE)}
+              >
+                Show more ({remaining} left)
+              </Button>
+            </div>
+          ) : null}
         </>
       )}
     </div>

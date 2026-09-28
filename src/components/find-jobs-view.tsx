@@ -8,6 +8,8 @@ import { matchesKeywords, roleIsSenior, withinPostedWindow } from "@/lib/filters
 import type { SourceStatus } from "@/lib/sources";
 import type { Application, QueueRules } from "@/lib/types";
 
+const PAGE_SIZE = 60;
+
 export function FindJobsView({
   applications,
   rules,
@@ -26,6 +28,7 @@ export function FindJobsView({
   discovering: boolean;
 }) {
   const [query, setQuery] = useState("");
+  const [limit, setLimit] = useState(PAGE_SIZE);
 
   // Only roles still waiting for a decision. Queued ones live on Queue only.
   const roles = applications
@@ -43,6 +46,8 @@ export function FindJobsView({
       return haystack.includes(query.trim().toLowerCase());
     })
     .sort((a, b) => (b.score ?? -1) - (a.score ?? -1));
+  const paged = roles.slice(0, limit);
+  const remaining = roles.length - paged.length;
 
   return (
     <div className="grid gap-5">
@@ -63,7 +68,10 @@ export function FindJobsView({
 
       <Input
         value={query}
-        onChange={(event) => setQuery(event.target.value)}
+        onChange={(event) => {
+          setQuery(event.target.value);
+          setLimit(PAGE_SIZE);
+        }}
         placeholder="Search company or title"
         aria-label="Search jobs"
         className="max-w-md"
@@ -106,7 +114,7 @@ export function FindJobsView({
         </div>
       ) : (
         <ul className="divide-y divide-foreground/10">
-          {roles.map((application) => (
+          {paged.map((application) => (
             <li key={application.id} className="grid gap-3 py-4 sm:grid-cols-[1fr_auto] sm:items-start">
               <div className="min-w-0">
                 <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
@@ -156,6 +164,18 @@ export function FindJobsView({
           ))}
         </ul>
       )}
+      {remaining > 0 ? (
+        <div className="flex justify-center">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setLimit((current) => current + PAGE_SIZE)}
+          >
+            Show more ({remaining} left)
+          </Button>
+        </div>
+      ) : null}
     </div>
   );
 }

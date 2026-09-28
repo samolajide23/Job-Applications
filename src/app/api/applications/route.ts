@@ -3,6 +3,7 @@ import { failureResponse, jsonError, parseUpsertBody, unauthorized } from "@/lib
 import { authorize } from "@/lib/auth";
 import { applicationByUrl, createOrUpdate, loadDashboard } from "@/lib/db";
 import type { NewApplication } from "@/lib/repository";
+import { slimApplication, slimApplications } from "@/lib/slim";
 import { isTrackerStatus } from "@/lib/statuses";
 import { computeStats } from "@/lib/stats";
 import type { Origin } from "@/lib/types";
@@ -14,8 +15,9 @@ export async function GET(request: Request) {
   if (!(await authorize(request))) return unauthorized();
   try {
     const { applications, rules } = await loadDashboard();
+    const slim = slimApplications(applications);
     return Response.json({
-      applications,
+      applications: slim,
       rules,
       stats: computeStats(applications),
     });
@@ -70,7 +72,7 @@ export async function POST(request: Request) {
       return Response.json({
         ok: true,
         created: results[0].created,
-        application: results[0].application,
+        application: slimApplication(results[0].application),
       });
     }
     return Response.json({
@@ -78,7 +80,7 @@ export async function POST(request: Request) {
       upserted: results.length,
       created: results.filter((result) => result.created).length,
       updated: results.filter((result) => !result.created).length,
-      applications: results.map((result) => result.application),
+      applications: slimApplications(results.map((result) => result.application)),
     });
   } catch (error) {
     return failureResponse(error);
