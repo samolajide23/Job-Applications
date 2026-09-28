@@ -1,4 +1,10 @@
-export type JobSourceId = "HiringCafe" | "Greenhouse" | "Jobicy" | "Remotive" | "RemoteOK";
+export type JobSourceId =
+  | "HiringCafe"
+  | "Greenhouse"
+  | "Ashby"
+  | "Jobicy"
+  | "Remotive"
+  | "RemoteOK";
 
 export type SourceHealth = "idle" | "searching" | "ok" | "empty" | "down";
 
@@ -14,6 +20,7 @@ export type SourceStatus = {
 export const JOB_SOURCES: { id: JobSourceId; label: string }[] = [
   { id: "HiringCafe", label: "Hiring Cafe" },
   { id: "Greenhouse", label: "Greenhouse" },
+  { id: "Ashby", label: "Ashby" },
   { id: "Jobicy", label: "Jobicy" },
   { id: "Remotive", label: "Remotive" },
   { id: "RemoteOK", label: "Remote OK" },

@@ -8,7 +8,7 @@ import type { NewApplication } from "@/lib/repository";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-export const maxDuration = 60;
+export const maxDuration = 120;
 
 async function runDiscovery() {
   const rules = await readRules();

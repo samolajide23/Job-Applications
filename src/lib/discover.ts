@@ -46,7 +46,7 @@ const SOFTWARE_TITLE =
   /\b(engineer|developer|software|full[- ]?stack|fullstack|backend|back-end|frontend|front-end|python|machine learning|data scientist|\bml\b|\bai\b|sre|devops|mlops|site reliability|\bswe\b|\bsde\b|platform|automation|typescript|react|node)\b/i;
 
 /** Open ATS boards list currently-open roles; first_published is not a useful age cut. */
-const OPEN_BOARD_SOURCES = new Set(["Greenhouse"]);
+const OPEN_BOARD_SOURCES = new Set(["Greenhouse", "Ashby"]);
 
 export function isSoftwareRole(title: string, tags: string[] = []): boolean {
   return SOFTWARE_TITLE.test(`${title} ${tags.join(" ")}`);

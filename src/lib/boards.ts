@@ -1,3 +1,4 @@
+import { pullAshby } from "@/lib/ashby";
 import {
   mapJobicyJob,
   mapRemoteOkJob,
@@ -59,6 +60,16 @@ export async function pullBoards(options?: { postedWithinDays?: number }): Promi
       source: "Greenhouse",
       run: async () => {
         const result = await pullGreenhouse({ postedWithinDays: days });
+        if (result.errors.length > 0 && result.jobs.length === 0) {
+          throw new Error(result.errors.slice(0, 3).join("; "));
+        }
+        return result.jobs;
+      },
+    },
+    {
+      source: "Ashby",
+      run: async () => {
+        const result = await pullAshby();
         if (result.errors.length > 0 && result.jobs.length === 0) {
           throw new Error(result.errors.slice(0, 3).join("; "));
         }

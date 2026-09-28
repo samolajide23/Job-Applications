@@ -35,8 +35,8 @@ export function roleIsSenior(application: Pick<Application, "title" | "scoreBrea
 
 export function withinPostedWindow(application: Application, days: number, now: Date = new Date()): boolean {
   if (days <= 0) return true;
-  // Greenhouse boards only list currently open roles — first_published is not a cutoff.
-  if (application.source === "Greenhouse") return true;
+  // Open ATS boards only list currently open roles — publishedAt is not a cutoff.
+  if (application.source === "Greenhouse" || application.source === "Ashby") return true;
   const stamp = application.postedAt ?? application.discoveredAt ?? application.appliedAt;
   if (!stamp) return true;
   const age = now.getTime() - new Date(stamp).getTime();
