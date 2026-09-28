@@ -195,18 +195,23 @@ function mapJobsPipeRow(value: unknown): DiscoveredJob | null {
   };
 }
 
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 async function pullViaJobsPipe(days: number): Promise<DiscoveredJob[]> {
   const key = process.env.JOBSPIPE_API_KEY?.trim();
   if (!key) {
     throw new Error("JOBSPIPE_API_KEY is not set.");
   }
-  const queries = [
-    "software engineer Ireland",
-    "python typescript Dublin",
-    "lead software engineer Ireland remote",
+  // Free plan: max 25 results/request; rate limit is tight — one request, then backoff.
+  void days;
+  const titleSets: string[][] = [
+    ["software engineer", "python engineer", "typescript", "lead software engineer"],
   ];
   const byUrl = new Map<string, DiscoveredJob>();
-  for (const query of queries) {
+  for (const titles of titleSets) {
+    await sleep(1100);
     const response = await fetch(JOBSPIPE_URL, {
       method: "POST",
       headers: {
@@ -215,13 +220,13 @@ async function pullViaJobsPipe(days: number): Promise<DiscoveredJob[]> {
         Authorization: `Bearer ${key}`,
       },
       body: JSON.stringify({
-        query,
-        limit: 40,
+        job_title_or: titles,
+        job_country_code_or: ["IE"],
         source_or: ["indeed"],
-        posted_within_days: days,
+        limit: 25,
       }),
       cache: "no-store",
-      signal: AbortSignal.timeout(20_000),
+      signal: AbortSignal.timeout(30_000),
     });
     const body = await response.text();
     if (!response.ok) {
@@ -244,6 +249,18 @@ export async function pullIndeed(options?: {
   const days =
     options?.postedWithinDays && options.postedWithinDays > 0 ? options.postedWithinDays : 14;
   const queries = options?.queries ?? DEFAULT_QUERIES;
+
+  // Prefer JobsPipe when configured — Indeed RSS is captcha-blocked on most cloud hosts.
+  if (process.env.JOBSPIPE_API_KEY?.trim()) {
+    try {
+      const jobs = await pullViaJobsPipe(days);
+      return { jobs, errors: [] };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "JobsPipe Indeed pull failed";
+      return { jobs: [], errors: [message] };
+    }
+  }
+
   const byUrl = new Map<string, DiscoveredJob>();
   const errors: string[] = [];
   let blocked = false;
@@ -261,17 +278,6 @@ export async function pullIndeed(options?: {
 
   if (byUrl.size > 0) {
     return { jobs: [...byUrl.values()], errors };
-  }
-
-  // RSS empty/blocked — optional JobsPipe path for live Indeed rows.
-  if (process.env.JOBSPIPE_API_KEY?.trim()) {
-    try {
-      const jobs = await pullViaJobsPipe(days);
-      return { jobs, errors: errors.length ? errors : [] };
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "JobsPipe Indeed pull failed";
-      return { jobs: [], errors: [...errors, message] };
-    }
   }
 
   if (blocked) {
