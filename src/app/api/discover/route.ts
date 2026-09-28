@@ -45,6 +45,7 @@ async function runDiscovery() {
       source: board.source,
       fetched: board.fetched,
       error: board.error,
+      ms: board.ms,
     })),
     pulled: prepared.pulled,
     applicable: prepared.accepted.length,

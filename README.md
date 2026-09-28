@@ -2,13 +2,15 @@
 
 Open dashboard for Samuel Olajide (Dundalk, Ireland, Europe/London). It keeps the apply history, scores newly discovered remote roles, and holds the queue the apply agent is allowed to submit. There is no login password.
 
-Discovery uses these sources, in this order:
+Discovery pulls these sources in parallel:
 
-- **Hiring Cafe** — remote Ireland/EU-flexible search against their private `search-jobs` API (no public API; Cloudflare may block some hosts)
-- **Greenhouse** — public board API for ~30 known company tokens (Canonical, GitLab, Intercom, Cloudflare, Wise, Adyen, Remote.com, …). There is no global Greenhouse search.
-- **Jobicy** — Europe/Ireland engineering plus Python/TypeScript tag feeds
-- **Remotive** — software-dev, data, and devops feeds
-- **Remote OK** — public JSON feed
+| Source | API | Notes |
+| --- | --- | --- |
+| **Hiring Cafe** | `POST hiringcafe.com/api/search-jobs` | Private search; Cloudflare often blocks server hosts (fails fast after one probe) |
+| **Greenhouse** | `GET boards-api.greenhouse.io/v1/boards/{token}/jobs?content=true` | ~30 company boards; one request each with job HTML included |
+| **Jobicy** | `GET jobicy.com/api/v2/remote-jobs` | Europe/Ireland engineering + Python/TypeScript/React tags |
+| **Remotive** | `GET remotive.com/api/remote-jobs` | Small recent public feed; software-adjacent categories kept |
+| **Remote OK** | `GET remoteok.com/api` | Public JSON feed |
 
 On each search, boards return hundreds of listings. We **auto-filter** to applicable roles only (software, not senior, not geo-blocked, recent, stack keywords). Among those, score ≥60 goes straight to **Queue**; the rest stay under Find jobs for a quick review. Already tracked URLs are never overwritten.
 

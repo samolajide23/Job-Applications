@@ -264,7 +264,7 @@ async function postSearch(searchState: Record<string, unknown>, page: number): P
     body: JSON.stringify({ size: PAGE_SIZE, page, searchState }),
     cache: "no-store",
     redirect: "manual",
-    signal: AbortSignal.timeout(20_000),
+    signal: AbortSignal.timeout(8_000),
   });
   if (response.status >= 300 && response.status < 400) {
     throw new Error(`Hiring Cafe redirected (${response.status}); refusing to convert POST.`);
@@ -279,17 +279,41 @@ export async function pullHiringCafe(options: SearchOptions): Promise<Discovered
   const seen = new Set<string>();
   const jobs: DiscoveredJob[] = [];
 
-  for (const query of queries) {
-    for (let page = 0; page < MAX_PAGES; page += 1) {
-      const batch = await postSearch(irelandRemoteSearchState(days, query), page);
-      if (batch.length === 0) break;
-      for (const item of batch) {
-        const mapped = mapHiringCafeJob(item);
-        if (!mapped || seen.has(mapped.url)) continue;
-        seen.add(mapped.url);
-        jobs.push(mapped);
+  // Probe once — if Cloudflare blocks this host, bail instead of retrying every query.
+  const firstQuery = queries[0] ?? "software engineer";
+  const firstBatch = await postSearch(irelandRemoteSearchState(days, firstQuery), 0);
+  for (const item of firstBatch) {
+    const mapped = mapHiringCafeJob(item);
+    if (!mapped || seen.has(mapped.url)) continue;
+    seen.add(mapped.url);
+    jobs.push(mapped);
+  }
+
+  const pageStarts: { query: string; page: number }[] = [];
+  if (firstBatch.length >= PAGE_SIZE) pageStarts.push({ query: firstQuery, page: 1 });
+  for (const query of queries.slice(1)) pageStarts.push({ query, page: 0 });
+
+  const batches = await Promise.all(
+    pageStarts.map(async ({ query, page: startPage }) => {
+      const found: DiscoveredJob[] = [];
+      for (let page = startPage; page < MAX_PAGES; page += 1) {
+        const batch = await postSearch(irelandRemoteSearchState(days, query), page);
+        if (batch.length === 0) break;
+        for (const item of batch) {
+          const mapped = mapHiringCafeJob(item);
+          if (mapped) found.push(mapped);
+        }
+        if (batch.length < PAGE_SIZE) break;
       }
-      if (batch.length < PAGE_SIZE) break;
+      return found;
+    }),
+  );
+
+  for (const found of batches) {
+    for (const mapped of found) {
+      if (seen.has(mapped.url)) continue;
+      seen.add(mapped.url);
+      jobs.push(mapped);
     }
   }
 
