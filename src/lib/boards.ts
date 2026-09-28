@@ -63,17 +63,36 @@ export async function pullBoards(options?: { postedWithinDays?: number }): Promi
       run: async () => {
         const queries = [
           "https://jobicy.com/api/v2/remote-jobs?count=50&geo=europe&industry=engineering",
-          "https://jobicy.com/api/v2/remote-jobs?count=20&geo=ireland&industry=engineering",
+          "https://jobicy.com/api/v2/remote-jobs?count=50&geo=ireland&industry=engineering",
+          "https://jobicy.com/api/v2/remote-jobs?count=50&tag=python",
+          "https://jobicy.com/api/v2/remote-jobs?count=50&tag=typescript",
         ];
         const pages = await Promise.all(queries.map((url) => fetchJson(url)));
-        return pages.flatMap((page) => jobsFrom(page, "jobs").map(mapJobicyJob).filter((job) => job !== null));
+        const byUrl = new Map<string, DiscoveredJob>();
+        for (const page of pages) {
+          for (const job of jobsFrom(page, "jobs").map(mapJobicyJob)) {
+            if (job) byUrl.set(job.url, job);
+          }
+        }
+        return [...byUrl.values()];
       },
     },
     {
       source: "Remotive",
       run: async () => {
-        const payload = await fetchJson("https://remotive.com/api/remote-jobs?category=software-dev");
-        return jobsFrom(payload, "jobs").map(mapRemotiveJob).filter((job) => job !== null);
+        const categories = ["software-dev", "data", "devops"];
+        const pages = await Promise.all(
+          categories.map((category) =>
+            fetchJson(`https://remotive.com/api/remote-jobs?category=${category}`),
+          ),
+        );
+        const byUrl = new Map<string, DiscoveredJob>();
+        for (const page of pages) {
+          for (const job of jobsFrom(page, "jobs").map(mapRemotiveJob)) {
+            if (job) byUrl.set(job.url, job);
+          }
+        }
+        return [...byUrl.values()];
       },
     },
     {

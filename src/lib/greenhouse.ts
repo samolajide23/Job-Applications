@@ -4,11 +4,11 @@ import { isSoftwareRole } from "@/lib/discover";
 const USER_AGENT = "SamuelOlajideJobDashboard/1.0 (Ireland; job discovery for personal apply queue)";
 const LIST_CONCURRENCY = 4;
 const DETAIL_CONCURRENCY = 6;
-const MAX_DETAILS = 120;
+const MAX_DETAILS = 220;
 
 /**
  * Greenhouse has no global search API — each employer has a public board token.
- * Tokens below come from Samuel's apply history plus a couple of verified boards.
+ * Tokens below come from Samuel's apply history plus verified Europe-friendly boards.
  */
 export const GREENHOUSE_BOARD_TOKENS = [
   "canonical",
@@ -31,6 +31,16 @@ export const GREENHOUSE_BOARD_TOKENS = [
   "liveperson",
   "togetherai",
   "anthropic",
+  "cloudflare",
+  "wise",
+  "adyen",
+  "remotecom",
+  "airbnb",
+  "dropbox",
+  "block",
+  "figma",
+  "shopify",
+  "hashicorp",
 ] as const;
 
 type GreenhouseJob = {

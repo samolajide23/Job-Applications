@@ -307,6 +307,27 @@ function evaluateLocation(location: string, blob: string): GeoResult {
       reason: "Geo says anywhere or worldwide, and Ireland/EU is not excluded.",
     };
   }
+  const remotePlace = /\bremote\b/i.test(place);
+  const nonEuRemoteOnly =
+    remotePlace &&
+    /\b(india|bangalore|bengaluru|apac|latam|brazil|nigeria|pakistan|philippines|mexico)\b/i.test(place) &&
+    !europe &&
+    !ireland &&
+    !uk;
+  if (nonEuRemoteOnly) {
+    return {
+      points: 4,
+      eligible: "unknown",
+      reason: `Remote listing is tied to “${place}” outside Ireland/EU.`,
+    };
+  }
+  if (remotePlace) {
+    return {
+      points: 14,
+      eligible: "eligible",
+      reason: "Remote listing without a US-only or Ireland/EU exclusion.",
+    };
+  }
   if (place) {
     return {
       points: 8,

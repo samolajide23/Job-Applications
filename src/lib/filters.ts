@@ -42,7 +42,8 @@ export function shouldAutoQueue(
   if (!rules.autoQueue) return false;
   if (input.total < rules.minScore) return false;
   if (rules.excludeSenior && input.seniorityFlag === "senior_skip") return false;
-  if (rules.eligibleOnly && input.eligible !== "eligible") return false;
+  // Keep blocked geos out of the apply queue; unknown (e.g. UK) can still be reviewed.
+  if (rules.eligibleOnly && input.eligible === "ineligible") return false;
   if (rules.keywords.length > 0) {
     const haystack = input.haystack.toLowerCase();
     const matched = rules.keywords.some((keyword) => haystack.includes(keyword.toLowerCase()));

@@ -36,7 +36,7 @@ export function CandidateView({
   const [source, setSource] = useState("all");
   const [days, setDays] = useState(rules.postedWithinDays);
   const [company, setCompany] = useState("");
-  const [minScoreOnly, setMinScoreOnly] = useState(true);
+  const [minScoreOnly, setMinScoreOnly] = useState(false);
   const [minScore, setMinScore] = useState(rules.minScore);
   const [autoQueue, setAutoQueue] = useState(rules.autoQueue);
 
@@ -47,7 +47,7 @@ export function CandidateView({
   const visible = candidates
     .filter((application) => {
       if (hideSenior && roleIsSenior(application)) return false;
-      if (eligibleOnly && application.scoreBreakdown && application.scoreBreakdown.eligible !== "eligible") {
+      if (eligibleOnly && application.scoreBreakdown?.eligible === "ineligible") {
         return false;
       }
       if (!matchesKeywords(application, keywords)) return false;
@@ -70,7 +70,7 @@ export function CandidateView({
         senior += 1;
         continue;
       }
-      if (eligibleOnly && application.scoreBreakdown && application.scoreBreakdown.eligible !== "eligible") {
+      if (eligibleOnly && application.scoreBreakdown?.eligible === "ineligible") {
         location += 1;
         continue;
       }
@@ -153,7 +153,7 @@ export function CandidateView({
       </div>
       <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
         <Toggle label="Hide senior titles" checked={hideSenior} onChange={setHideSenior} />
-        <Toggle label="Ireland / EU eligible only" checked={eligibleOnly} onChange={setEligibleOnly} />
+        <Toggle label="Hide blocked geos (keep unknown)" checked={eligibleOnly} onChange={setEligibleOnly} />
         <Toggle label={`Score ${minScore}+ only`} checked={minScoreOnly} onChange={setMinScoreOnly} />
         <Toggle label="Auto-queue new matches" checked={autoQueue} onChange={setAutoQueue} />
       </div>
@@ -235,7 +235,7 @@ export function CandidateView({
         <div className="rounded-xl bg-card/80 px-4 py-8 text-center text-sm text-muted-foreground ring-1 ring-foreground/10">
           <p>
             {candidates.length} roles are stored, but none match the current filters
-            ({filterStats.senior} senior, {filterStats.location} not Ireland/EU-eligible,{" "}
+            ({filterStats.senior} senior, {filterStats.location} blocked location,{" "}
             {filterStats.keyword} keyword misses, {filterStats.score} below score {minScore},{" "}
             {filterStats.window} outside {days} days).
           </p>

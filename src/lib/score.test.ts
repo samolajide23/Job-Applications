@@ -44,6 +44,29 @@ test("does not give a high score when the listing has no stack evidence", () => 
   assert.equal(score.salary, 0);
 });
 
+test("treats plain Remote listings as eligible unless geo is blocked", () => {
+  const remote = scoreJob({
+    title: "Backend Engineer",
+    company: "Acme",
+    location: "Remote",
+    description: "Python TypeScript APIs.",
+    tags: ["python"],
+    url: "https://example.com/remote",
+  });
+  assert.equal(remote.eligible, "eligible");
+  assert.ok(remote.location >= 14);
+
+  const indiaRemote = scoreJob({
+    title: "Backend Engineer",
+    company: "Acme",
+    location: "Remote, India",
+    description: "Python.",
+    tags: [],
+    url: "https://example.com/india",
+  });
+  assert.equal(indiaRemote.eligible, "unknown");
+});
+
 test("marks US-only and Ceriga as ineligible and senior titles to skip", () => {
   const us = scoreJob({
     title: "Backend Engineer",

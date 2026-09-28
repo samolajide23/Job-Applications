@@ -5,12 +5,12 @@ Open dashboard for Samuel Olajide (Dundalk, Ireland, Europe/London). It keeps th
 Discovery uses these sources, in this order:
 
 - **Hiring Cafe** — remote Ireland/EU-flexible search against their private `search-jobs` API (no public API; Cloudflare may block some hosts)
-- **Greenhouse** — public board API for companies from your history (Canonical, GitLab, Intercom, Elastic, Datadog, Vercel, NearForm, …). There is no global Greenhouse search; we poll known board tokens.
-- **Jobicy** — Europe and Ireland engineering feeds
-- **Remotive** — software-dev feed
+- **Greenhouse** — public board API for ~30 known company tokens (Canonical, GitLab, Intercom, Cloudflare, Wise, Adyen, Remote.com, …). There is no global Greenhouse search.
+- **Jobicy** — Europe/Ireland engineering plus Python/TypeScript tag feeds
+- **Remotive** — software-dev, data, and devops feeds
 - **Remote OK** — public JSON feed
 
-Auto-queue is on by default. New roles that score ≥60, are not senior titles, look Ireland/EU eligible, and match at least one keyword (AI, LLM, Python, full-stack, …) land in **Queue**. Already tracked URLs are never overwritten.
+Auto-queue is on by default. New roles that score ≥60, are not senior titles, are not geo-blocked (plain Remote / unknown UK still pass), and match at least one keyword (AI, LLM, Python, full-stack, …) land in **Queue**. Already tracked URLs are never overwritten.
 
 ## Local
 
