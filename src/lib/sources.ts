@@ -4,6 +4,7 @@ export type JobSourceId =
   | "Ashby"
   | "Lever"
   | "LinkedIn"
+  | "Indeed"
   | "Jobicy"
   | "Remotive"
   | "RemoteOK";
@@ -25,6 +26,7 @@ export const JOB_SOURCES: { id: JobSourceId; label: string }[] = [
   { id: "Ashby", label: "Ashby" },
   { id: "Lever", label: "Lever" },
   { id: "LinkedIn", label: "LinkedIn" },
+  { id: "Indeed", label: "Indeed" },
   { id: "Jobicy", label: "Jobicy" },
   { id: "Remotive", label: "Remotive" },
   { id: "RemoteOK", label: "Remote OK" },

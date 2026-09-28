@@ -116,6 +116,16 @@ export function normalizeUrl(raw: string): string | null {
         url.search = "";
       }
     }
+    // Canonical Indeed viewjob links by jk id.
+    if (url.hostname.includes("indeed.")) {
+      const jk = url.searchParams.get("jk");
+      if (jk) {
+        url.hostname = url.hostname.includes("ie.indeed") ? "ie.indeed.com" : "www.indeed.com";
+        url.pathname = "/viewjob";
+        url.search = "";
+        url.searchParams.set("jk", jk);
+      }
+    }
     return url.toString();
   } catch {
     return null;

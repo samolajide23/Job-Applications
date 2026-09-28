@@ -8,6 +8,7 @@ import {
 import { pullGreenhouse } from "@/lib/greenhouse";
 import { pullHiringCafe } from "@/lib/hiring-cafe";
 import { pullLever } from "@/lib/lever";
+import { pullIndeed } from "@/lib/indeed";
 import { pullLinkedIn } from "@/lib/linkedin";
 
 export type BoardResult = {
@@ -92,6 +93,16 @@ export async function pullBoards(options?: { postedWithinDays?: number }): Promi
       source: "LinkedIn",
       run: async () => {
         const result = await pullLinkedIn({ postedWithinDays: days });
+        if (result.errors.length > 0 && result.jobs.length === 0) {
+          throw new Error(result.errors.slice(0, 3).join("; "));
+        }
+        return result.jobs;
+      },
+    },
+    {
+      source: "Indeed",
+      run: async () => {
+        const result = await pullIndeed({ postedWithinDays: days });
         if (result.errors.length > 0 && result.jobs.length === 0) {
           throw new Error(result.errors.slice(0, 3).join("; "));
         }

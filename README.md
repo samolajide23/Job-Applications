@@ -11,8 +11,9 @@ Discovery pulls these sources in parallel:
 | **Ashby** | `GET api.ashbyhq.com/posting-api/job-board/{org}` | ~60 company boards (OpenAI skipped — payload too large) |
 | **Lever** | `GET api.lever.co/v0/postings/{site}?mode=json` | ~10 verified Lever sites (Metabase, Spotify, Qonto, Palantir, …) |
 | **LinkedIn** | `GET linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search` | Public guest job cards (Ireland + remote Europe queries); may rate-limit or challenge some hosts |
+| **Indeed** | `GET ie.indeed.com/rss` | Public Ireland RSS; cloud hosts often hit captcha. Optional `JOBSPIPE_API_KEY` pulls live Indeed via JobsPipe |
 
-Greenhouse / Ashby / Lever each need their **own** company slug — they are not one shared list. Aggregators (Jobicy, Remotive, Remote OK, LinkedIn guest search) do not need company names.
+Greenhouse / Ashby / Lever each need their **own** company slug — they are not one shared list. Aggregators (Jobicy, Remotive, Remote OK, LinkedIn guest search, Indeed RSS) do not need company names.
 | **Jobicy** | `GET jobicy.com/api/v2/remote-jobs` | Europe/Ireland engineering + Python/TypeScript/React tags |
 | **Remotive** | `GET remotive.com/api/remote-jobs` | Small recent public feed; software-adjacent categories kept |
 | **Remote OK** | `GET remoteok.com/api` | Public JSON feed |
@@ -44,6 +45,7 @@ npm run db:seed
 | `DATABASE_URL` | Production | Neon Postgres connection string. |
 | `SYNC_TOKEN` | Optional | Bearer token for the apply agent and sync. |
 | `CRON_SECRET` | Optional | Vercel Cron calls `GET /api/discover` with this bearer token. |
+| `JOBSPIPE_API_KEY` | Optional | Live Indeed feed via JobsPipe when Indeed RSS is captcha-blocked. |
 
 The browser UI is open (no `DASHBOARD_PASSWORD`). Set agent tokens in Vercel if you use them:
 
