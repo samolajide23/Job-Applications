@@ -59,6 +59,44 @@ export function CandidateView({
     })
     .sort((a, b) => (b.score ?? -1) - (a.score ?? -1));
   const queueable = visible.filter((application) => application.status === "discovered");
+  const filterStats = useMemo(() => {
+    let senior = 0;
+    let location = 0;
+    let keyword = 0;
+    let score = 0;
+    let window = 0;
+    for (const application of candidates) {
+      if (hideSenior && roleIsSenior(application)) {
+        senior += 1;
+        continue;
+      }
+      if (eligibleOnly && application.scoreBreakdown && application.scoreBreakdown.eligible !== "eligible") {
+        location += 1;
+        continue;
+      }
+      if (!matchesKeywords(application, keywords)) {
+        keyword += 1;
+        continue;
+      }
+      if (!withinPostedWindow(application, days)) {
+        window += 1;
+        continue;
+      }
+      if (minScoreOnly && application.score !== null && application.score < minScore) {
+        score += 1;
+      }
+    }
+    return { senior, location, keyword, score, window };
+  }, [candidates, hideSenior, eligibleOnly, keywords, days, minScoreOnly, minScore]);
+
+  function handleRelaxFilters() {
+    setHideSenior(false);
+    setEligibleOnly(false);
+    setMinScoreOnly(false);
+    setKeywords([]);
+    setSource("all");
+    setCompany("");
+  }
 
   function toggleKeyword(keyword: string) {
     setKeywords((current) =>
@@ -182,18 +220,29 @@ export function CandidateView({
         </Button>
         <p className="text-xs text-muted-foreground">
           {visible.length} shown · {candidates.length} stored candidates
+          {candidates.length > visible.length
+            ? ` · hidden: ${filterStats.senior} senior, ${filterStats.location} location, ${filterStats.keyword} keywords, ${filterStats.score} score, ${filterStats.window} age`
+            : ""}
         </p>
       </div>
       {candidates.length === 0 ? (
         <p className="rounded-xl bg-card/80 px-4 py-8 text-center text-sm text-muted-foreground ring-1 ring-foreground/10">
-          No discovered roles yet. Pull Hiring Cafe and Greenhouse first (then Jobicy, Remotive, Remote OK),
-          or add a listing yourself. New matches that pass your rules go straight to the apply queue when
-          auto-queue is on.
+          No discovered roles yet. Click <span className="text-foreground">Pull new roles</span> to fetch
+          Greenhouse, Jobicy, Remotive, and Remote OK. Hiring Cafe only works from networks that can open
+          hiringcafe.com.
         </p>
       ) : visible.length === 0 ? (
-        <p className="rounded-xl bg-card/80 px-4 py-8 text-center text-sm text-muted-foreground ring-1 ring-foreground/10">
-          Nothing matches these filters. Lower the score floor or show senior and unknown locations.
-        </p>
+        <div className="rounded-xl bg-card/80 px-4 py-8 text-center text-sm text-muted-foreground ring-1 ring-foreground/10">
+          <p>
+            {candidates.length} roles are stored, but none match the current filters
+            ({filterStats.senior} senior, {filterStats.location} not Ireland/EU-eligible,{" "}
+            {filterStats.keyword} keyword misses, {filterStats.score} below score {minScore},{" "}
+            {filterStats.window} outside {days} days).
+          </p>
+          <Button type="button" variant="outline" className="mt-4" onClick={handleRelaxFilters}>
+            Show all stored candidates
+          </Button>
+        </div>
       ) : (
         <ul className="grid gap-3">
           {visible.map((application) => (
