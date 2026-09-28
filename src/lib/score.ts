@@ -272,12 +272,12 @@ function evaluateLocation(location: string, blob: string): GeoResult {
   const explicitIrelandInCopy = /\b(open to ireland|based in ireland|remote from ireland|ireland-based|eu citizens|anywhere in the eu)\b/i.test(
     blob,
   );
-  const usOnly =
-    /\b(usa|u\.s\.a\.|united states|north america only|us only|u\.s\. only)\b/i.test(place) &&
-    !ireland &&
-    !europe &&
-    !worldwide &&
-    !explicitIrelandInCopy;
+  const usMarker =
+    /\b(usa|u\.s\.a\.|united states|north america only|us only|u\.s\. only|\bus\b|u\.s\.)\b/i.test(place) ||
+    /\b(san francisco|new york|nyc|chicago|seattle|austin|boston|denver|atlanta|los angeles|toronto|canada)\b/i.test(
+      place,
+    );
+  const usOnly = usMarker && !ireland && !europe && !worldwide && !uk && !explicitIrelandInCopy;
   const regionBlocked =
     /\b(apac only|latam only|americas only)\b/i.test(place) && !europe && !ireland;
 

@@ -44,6 +44,28 @@ test("does not give a high score when the listing has no stack evidence", () => 
   assert.equal(score.salary, 0);
 });
 
+test("marks bare US remote and US city locations as ineligible", () => {
+  const usRemote = scoreJob({
+    title: "Software Engineer",
+    company: "Acme",
+    location: "US - Remote",
+    description: "Python TypeScript.",
+    tags: ["python"],
+    url: "https://example.com/us-remote",
+  });
+  assert.equal(usRemote.eligible, "ineligible");
+
+  const chicago = scoreJob({
+    title: "Software Engineer",
+    company: "Acme",
+    location: "Chicago",
+    description: "Kotlin backend.",
+    tags: [],
+    url: "https://example.com/chicago",
+  });
+  assert.equal(chicago.eligible, "ineligible");
+});
+
 test("treats plain Remote listings as eligible unless geo is blocked", () => {
   const remote = scoreJob({
     title: "Backend Engineer",

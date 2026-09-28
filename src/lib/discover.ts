@@ -43,7 +43,10 @@ export type PrepareResult = {
 };
 
 const SOFTWARE_TITLE =
-  /\b(engineer|developer|software|full[- ]?stack|fullstack|backend|back-end|frontend|front-end|python|machine learning|data scientist|\bml\b|\bai\b|sre|platform|automation|typescript|react|node)\b/i;
+  /\b(engineer|developer|software|full[- ]?stack|fullstack|backend|back-end|frontend|front-end|python|machine learning|data scientist|\bml\b|\bai\b|sre|devops|mlops|site reliability|\bswe\b|\bsde\b|platform|automation|typescript|react|node)\b/i;
+
+/** Open ATS boards list currently-open roles; first_published is not a useful age cut. */
+const OPEN_BOARD_SOURCES = new Set(["Greenhouse"]);
 
 export function isSoftwareRole(title: string, tags: string[] = []): boolean {
   return SOFTWARE_TITLE.test(`${title} ${tags.join(" ")}`);
@@ -77,7 +80,7 @@ export function prepareDiscovery(
       notSoftware += 1;
       continue;
     }
-    if (job.postedAt && rules.postedWithinDays > 0) {
+    if (job.postedAt && rules.postedWithinDays > 0 && !OPEN_BOARD_SOURCES.has(job.source)) {
       const age = now.getTime() - new Date(job.postedAt).getTime();
       if (age > rules.postedWithinDays * 86_400_000) {
         tooOld += 1;

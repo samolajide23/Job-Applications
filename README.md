@@ -7,7 +7,7 @@ Discovery pulls these sources in parallel:
 | Source | API | Notes |
 | --- | --- | --- |
 | **Hiring Cafe** | `POST hiringcafe.com/api/search-jobs` | Private search; Cloudflare often blocks server hosts (fails fast after one probe) |
-| **Greenhouse** | `GET boards-api.greenhouse.io/v1/boards/{token}/jobs?content=true` | ~30 company boards; one request each with job HTML included |
+| **Greenhouse** | `GET boards-api.greenhouse.io/v1/boards/{token}/jobs?content=true` | ~40 company boards; open roles kept even if first posted >14 days ago |
 | **Jobicy** | `GET jobicy.com/api/v2/remote-jobs` | Europe/Ireland engineering + Python/TypeScript/React tags |
 | **Remotive** | `GET remotive.com/api/remote-jobs` | Small recent public feed; software-adjacent categories kept |
 | **Remote OK** | `GET remoteok.com/api` | Public JSON feed |

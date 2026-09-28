@@ -6,7 +6,7 @@ const LIST_CONCURRENCY = 12;
 
 /**
  * Greenhouse has no global search API — each employer has a public board token.
- * Tokens below come from Samuel's apply history plus verified Europe-friendly boards.
+ * Tokens: apply history + Europe-friendly / remote-friendly engineering boards.
  */
 export const GREENHOUSE_BOARD_TOKENS = [
   "canonical",
@@ -39,6 +39,17 @@ export const GREENHOUSE_BOARD_TOKENS = [
   "figma",
   "shopify",
   "hashicorp",
+  "speechmatics",
+  "hubspot",
+  "airtable",
+  "coinbase",
+  "duolingo",
+  "discord",
+  "reddit",
+  "asana",
+  "mongodb",
+  "databricks",
+  "tripadvisor",
 ] as const;
 
 type GreenhouseJob = {
@@ -104,16 +115,25 @@ function locationText(job: GreenhouseJob): string {
   return [...new Set(parts)].join(" · ");
 }
 
-function looksObviouslyUsOnly(location: string): boolean {
-  const text = location.toLowerCase();
-  if (!text) return false;
-  const hasUs = /\b(united states|\bu\.?s\.?a\.?\b|\bus\b|america)\b/.test(text);
-  if (!hasUs) return false;
+/**
+ * Drop only clear US-only / Americas-only listings. If the description allows
+ * remote Ireland/EU/worldwide, keep it for scoring.
+ */
+export function looksObviouslyUsOnly(location: string, description = ""): boolean {
+  const place = location.toLowerCase();
+  const blob = `${place}\n${description.slice(0, 2000).toLowerCase()}`;
   const allowsIrelandOrEu =
-    /\b(ireland|dublin|europe|european|eea|emea|\beu\b|united kingdom|\buk\b|london|worldwide|global|anywhere)\b/.test(
-      text,
+    /\b(ireland|dublin|europe|european|eea|emea|\beu\b|united kingdom|\buk\b|london|worldwide|world wide|global|anywhere|remote from anywhere)\b/.test(
+      blob,
     );
-  return !allowsIrelandOrEu;
+  if (allowsIrelandOrEu) return false;
+
+  const hasUs = /\b(united states|\bu\.?s\.?a\.?\b|\bus only\b|\bu\.s\. only\b|america)\b/.test(place);
+  const americasOnly = /\b(americas only|north america only|latam only|apac only)\b/.test(place);
+  if (!hasUs && !americasOnly) return false;
+
+  // "Remote" + US city with no EU/worldwide allowance → skip early.
+  return true;
 }
 
 export function mapGreenhouseJob(value: unknown, boardToken: string): DiscoveredJob | null {
@@ -136,6 +156,7 @@ export function mapGreenhouseJob(value: unknown, boardToken: string): Discovered
     location,
     description: asString(record.content),
     tags: [...departments, "Greenhouse", boardToken],
+    // Keep first_published for display; prepareDiscovery does not age-cut Greenhouse.
     postedAt: postedIso(record.first_published) ?? postedIso(record.updated_at),
     salaryText: null,
     level: null,
@@ -168,9 +189,8 @@ export type GreenhousePullResult = {
   errors: string[];
 };
 
-export async function pullGreenhouse(options?: { postedWithinDays?: number }): Promise<GreenhousePullResult> {
-  const days = options?.postedWithinDays && options.postedWithinDays > 0 ? options.postedWithinDays : 14;
-  const now = Date.now();
+export async function pullGreenhouse(_options?: { postedWithinDays?: number }): Promise<GreenhousePullResult> {
+  // Board listings are currently open — do not drop by first_published age here.
   const listed = await mapPool([...GREENHOUSE_BOARD_TOKENS], LIST_CONCURRENCY, listBoardJobs);
   const errors = listed.filter((board) => board.error).map((board) => `${board.token}: ${board.error}`);
 
@@ -181,12 +201,8 @@ export async function pullGreenhouse(options?: { postedWithinDays?: number }): P
       const title = asString(job.title);
       if (!title || !isSoftwareRole(title)) continue;
       const location = locationText(job);
-      if (looksObviouslyUsOnly(location)) continue;
-      const posted = postedIso(job.first_published) ?? postedIso(job.updated_at);
-      if (posted) {
-        const age = now - new Date(posted).getTime();
-        if (age > days * 86_400_000) continue;
-      }
+      const description = asString(job.content);
+      if (looksObviouslyUsOnly(location, description)) continue;
       const mapped = mapGreenhouseJob(job, board.token);
       if (!mapped || seen.has(mapped.url)) continue;
       seen.add(mapped.url);
