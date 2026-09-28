@@ -12,7 +12,7 @@ Discovery pulls these sources in parallel:
 | **Remotive** | `GET remotive.com/api/remote-jobs` | Small recent public feed; software-adjacent categories kept |
 | **Remote OK** | `GET remoteok.com/api` | Public JSON feed |
 
-On each search, boards return hundreds of listings. We **auto-filter** to applicable roles only (software, not senior, not geo-blocked, recent, stack keywords). Among those, score ≥60 goes straight to **Queue**; the rest stay under Find jobs for a quick review. Already tracked URLs are never overwritten.
+Filters follow Samuel's CV (Lead Software Engineer, 5+ years, Ireland): software roles matching Python/TypeScript/React/Node/AWS/K8s/AI keywords; Staff/Principal/Director/manager titles dropped (Senior/Lead kept); geo-blocked and Ceriga skipped. Score ≥60 auto-queues. Greenhouse open roles ignore the 14-day age cut.
 
 ## Local
 
@@ -103,7 +103,7 @@ curl -X POST "$APP_URL/api/discover" \
 
 Response rate is `(rejected + interview + final interview + offer + recruiter contacted) / submitted`. Submitted means applied plus later pipeline statuses. Skipped, blocked, needs input, and candidates are not in that denominator. The Applied card is only the current `applied` status.
 
-Scoring is rules on the listing text (location, skills, seniority, AI/Python, project overlap, salary, company, ATS link). Empty evidence scores zero. It does not guess a fit. Senior, staff, principal, lead, director, head, and manager titles are hidden by default. US-only, hybrid/onsite, relocation, and Ceriga roles are not stored.
+Scoring is rules on the listing text (location, CV stack, seniority band, AI/Python, project overlap, salary ~€55–80k, company, ATS link). Empty evidence scores zero. Staff/principal/director/manager titles are hidden; Senior/Lead are in band. US-only, hybrid/onsite without remote, relocation, and Ceriga are not stored.
 
 ## Agent sync
 

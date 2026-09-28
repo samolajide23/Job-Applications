@@ -53,8 +53,8 @@ export function isSoftwareRole(title: string, tags: string[] = []): boolean {
 }
 
 /**
- * Keep only applicable roles: software, recent, not geo-blocked, not senior,
- * and matching stack keywords. Score ≥ minScore goes straight to the apply queue.
+ * Keep applicable roles: software, recent (except open ATS boards), not geo-blocked,
+ * not Staff/Principal/Director+, matching CV stack keywords. Score ≥ minScore → Queue.
  */
 export function prepareDiscovery(
   jobs: DiscoveredJob[],

@@ -91,11 +91,13 @@ export function isTrackerStatus(status: Status): boolean {
   return !(CANDIDATE_STATUSES as readonly string[]).includes(status);
 }
 
+/**
+ * Titles above Samuel's Lead / Senior band (5+ years, currently Lead SE).
+ * Senior and Lead roles are in-scope; Staff/Principal/Director+ are not.
+ */
 export function isSeniorTitle(title: string): boolean {
-  if (/\bjunior\b/i.test(title) && /\b(senior|sr\.?)\b/i.test(title)) {
-    return false;
-  }
-  return /\b(senior|sr\.?|staff|principal|lead|director|head of|head|vp|vice president|manager)\b/i.test(
+  if (/\b(junior|associate|intermediate)\b/i.test(title)) return false;
+  return /\b(staff|principal|distinguished|director|head of|head|vp|vice president|engineering manager|manager)\b/i.test(
     title,
   );
 }

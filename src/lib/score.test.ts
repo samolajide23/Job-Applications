@@ -89,7 +89,7 @@ test("treats plain Remote listings as eligible unless geo is blocked", () => {
   assert.equal(indiaRemote.eligible, "unknown");
 });
 
-test("marks US-only and Ceriga as ineligible and senior titles to skip", () => {
+test("marks US-only and Ceriga as ineligible; Staff+ skips, Senior/Lead stays", () => {
   const us = scoreJob({
     title: "Backend Engineer",
     company: "Acme",
@@ -108,16 +108,27 @@ test("marks US-only and Ceriga as ineligible and senior titles to skip", () => {
     url: "https://example.com/ceriga",
   });
   assert.equal(ceriga.eligible, "ineligible");
-  const senior = scoreJob({
-    title: "Senior Backend Engineer",
+  const staff = scoreJob({
+    title: "Staff Backend Engineer",
     company: "Acme",
     location: "Europe",
     description: "Python",
     tags: [],
-    url: "https://example.com/senior",
+    url: "https://example.com/staff",
     level: "Any",
   });
-  assert.equal(senior.seniorityFlag, "senior_skip");
+  assert.equal(staff.seniorityFlag, "senior_skip");
+  const senior = scoreJob({
+    title: "Senior Backend Engineer",
+    company: "Acme",
+    location: "Europe",
+    description: "Python TypeScript",
+    tags: [],
+    url: "https://example.com/senior",
+    level: "Senior",
+  });
+  assert.notEqual(senior.seniorityFlag, "senior_skip");
+  assert.ok(senior.seniority >= 14);
 });
 
 test("auto-filters to applicable roles and auto-queues strong matches", () => {
@@ -148,16 +159,16 @@ test("auto-filters to applicable roles and auto-queues strong matches", () => {
         level: null,
       },
       {
-        url: "https://example.com/senior",
+        url: "https://example.com/staff",
         company: "Acme",
-        title: "Senior Backend Engineer",
+        title: "Staff Backend Engineer",
         source: "Jobicy",
         location: "Europe",
         description: "Python TypeScript",
         tags: ["python"],
         postedAt: "2026-09-23T00:00:00.000Z",
         salaryText: null,
-        level: "Senior",
+        level: "Staff",
       },
       {
         url: "https://example.com/sales",

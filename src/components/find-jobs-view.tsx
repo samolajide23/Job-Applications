@@ -50,9 +50,8 @@ export function FindJobsView({
         <div className="min-w-0">
           <h2 className="text-lg font-semibold tracking-tight">Find jobs</h2>
           <p className="max-w-xl text-sm text-muted-foreground">
-            Boards return hundreds of listings. We keep junior/mid software roles that match your stack
-            and aren&apos;t geo-blocked. Score {rules.minScore}+ goes to Queue automatically; queued roles
-            leave this list.
+            Tuned to your CV (Lead SE, 5+ years, Ireland): Python/TS/React/Node, AWS/K8s, applied AI.
+            Staff/Principal/Director+ and blocked geos are dropped. Score {rules.minScore}+ auto-queues.
           </p>
         </div>
         <Button type="button" onClick={() => void onDiscover()} disabled={discovering} className="shrink-0">
@@ -92,7 +91,7 @@ export function FindJobsView({
             <p className="mt-1 max-w-md text-sm text-muted-foreground">
               {query.trim()
                 ? "Clear the search box to see every applicable role."
-                : "Search the boards — we auto-drop senior, blocked-location, and off-stack roles."}
+                : "Search the boards — we auto-drop Staff/Principal+, blocked locations, and off-stack roles."}
             </p>
           </div>
           {query.trim() ? (

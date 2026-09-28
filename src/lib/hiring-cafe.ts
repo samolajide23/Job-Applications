@@ -59,7 +59,7 @@ function irelandRemoteSearchState(days: number, searchQuery: string): Record<str
     commitmentTypes: ["Full Time", "Contract"],
     jobTitleQuery: "",
     jobDescriptionQuery: "",
-    seniorityLevel: ["No Prior Experience Required", "Entry Level", "Mid Level"],
+    seniorityLevel: ["Entry Level", "Mid Level", "Senior Level"],
     roleTypes: ["Individual Contributor"],
     roleYoeRange: [0, 8],
     excludeIfRoleYoeIsNotSpecified: false,

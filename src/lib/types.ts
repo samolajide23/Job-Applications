@@ -75,17 +75,23 @@ export type Stats = {
   last30Days: DayCount[];
 };
 
+/** Stack keywords from Samuel's CV (OR match on title/description). */
 export const KEYWORD_PRESETS = [
-  "AI",
-  "LLM",
   "Python",
+  "TypeScript",
+  "React",
+  "Node",
   "full-stack",
   "backend",
-  "React",
+  "AWS",
+  "Kubernetes",
+  "Docker",
+  "Django",
+  "AI",
+  "LLM",
+  "machine learning",
   "automation",
-  "TypeScript",
   "RAG",
-  "GenAI",
 ] as const;
 
 export const DEFAULT_RULES: QueueRules = {

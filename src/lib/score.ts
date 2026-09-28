@@ -12,6 +12,7 @@ export type ScoreInput = {
   level?: string | null;
 };
 
+/** Weighted to Samuel's CV: Python/TS/React/Node full-stack, AWS/K8s, applied ML. */
 const SKILL_TERMS: { label: string; pattern: RegExp; points: number }[] = [
   { label: "python", pattern: /\bpython\b/i, points: 6 },
   { label: "typescript", pattern: /\btypescript\b|\bts\b/i, points: 5 },
@@ -20,7 +21,13 @@ const SKILL_TERMS: { label: string; pattern: RegExp; points: number }[] = [
   { label: "node", pattern: /\bnode(?:\.js)?\b/i, points: 4 },
   { label: "full-stack", pattern: /\bfull[- ]?stack\b/i, points: 5 },
   { label: "backend", pattern: /\bback[- ]?end\b/i, points: 4 },
-  { label: "automation", pattern: /\bautomation\b/i, points: 4 },
+  { label: "aws", pattern: /\baws\b|amazon web services/i, points: 4 },
+  { label: "docker", pattern: /\bdocker\b/i, points: 3 },
+  { label: "kubernetes", pattern: /\bkubernetes\b|\bk8s\b/i, points: 3 },
+  { label: "django", pattern: /\bdjango\b/i, points: 3 },
+  { label: "java", pattern: /\bjava\b/i, points: 2 },
+  { label: "kotlin", pattern: /\bkotlin\b/i, points: 2 },
+  { label: "automation", pattern: /\bautomation\b/i, points: 3 },
   { label: "api", pattern: /\bapis?\b/i, points: 3 },
   { label: "next.js", pattern: /\bnext\.?js\b/i, points: 3 },
   { label: "sql", pattern: /\b(postgres|sql)\b/i, points: 2 },
@@ -28,7 +35,7 @@ const SKILL_TERMS: { label: string; pattern: RegExp; points: number }[] = [
 ];
 
 const AI_PATTERN =
-  /\b(llm|genai|gen ai|generative ai|rag|machine learning|\bml\b|langchain|mcp|\bgpt\b|openai|\bai\b)\b/i;
+  /\b(llm|genai|gen ai|generative ai|rag|machine learning|\bml\b|langchain|mcp|\bgpt\b|openai|tensorflow|nlp|computer vision|\bai\b)\b/i;
 const PROJECT_TERMS: { label: string; pattern: RegExp }[] = [
   { label: "rag", pattern: /\brag\b/i },
   { label: "automation", pattern: /\bautomation\b/i },
@@ -37,6 +44,9 @@ const PROJECT_TERMS: { label: string; pattern: RegExp }[] = [
   { label: "react", pattern: /\breact\b/i },
   { label: "typescript", pattern: /\btypescript\b/i },
   { label: "web app", pattern: /\bweb apps?\b/i },
+  { label: "aws", pattern: /\baws\b/i },
+  { label: "kubernetes", pattern: /\bkubernetes\b|\bk8s\b/i },
+  { label: "tensorflow", pattern: /\btensorflow\b/i },
 ];
 
 type GeoResult = {
@@ -104,40 +114,58 @@ function scoreSeniority(
   blob: string,
 ): { points: number; flag: SeniorityFlag; reason: string } {
   const levelText = level.toLowerCase();
-  const titleSenior = isSeniorTitle(title);
-  const levelSenior = /\bsenior\b|\bstaff\b|\bprincipal\b|\blead\b|\bdirector\b/.test(levelText);
-  const levelJunior = /junior|entry|midweight|mid-level|associate/.test(levelText);
+  const titleTooSenior = isSeniorTitle(title);
+  const levelTooSenior = /\b(staff|principal|director|head|vp|manager)\b/.test(levelText);
+  const levelJunior = /junior|entry|midweight|mid-level|associate|intermediate/.test(levelText);
+  const levelSeniorBand = /\b(senior|lead)\b/.test(levelText);
   const levelOpen = /\bany\b/.test(levelText);
+  const titleSeniorBand = /\b(senior|sr\.?|lead)\b/i.test(title);
 
-  if (titleSenior || (levelSenior && !/\bjunior\b/i.test(title))) {
-    const why = titleSenior ? "Title includes a senior/lead marker." : `Listing level is ${level}.`;
+  if (titleTooSenior || (levelTooSenior && !/\b(junior|associate|intermediate)\b/i.test(title))) {
+    const why = titleTooSenior
+      ? "Title is above the Senior/Lead band (staff/principal/director/manager)."
+      : `Listing level is ${level}.`;
     return { points: 0, flag: "senior_skip", reason: why };
   }
   if (levelJunior) {
-    return { points: 15, flag: "junior_mid", reason: `Listing level is ${level}.` };
+    return { points: 12, flag: "junior_mid", reason: `Listing level is ${level}.` };
+  }
+  if (titleSeniorBand || levelSeniorBand) {
+    return {
+      points: 15,
+      flag: "experienced",
+      reason: "Senior/Lead band matches a Lead SE with 5+ years.",
+    };
   }
   const years = yearsRequired(blob);
-  if (years !== null && years >= 5) {
+  if (years !== null && years >= 8) {
     return {
-      points: 6,
+      points: 4,
       flag: "experienced",
-      reason: `Listing asks for about ${years}+ years. Not auto-hidden.`,
+      reason: `Listing asks for about ${years}+ years — stretch vs 5+ on the CV.`,
+    };
+  }
+  if (years !== null && years >= 4) {
+    return {
+      points: 14,
+      flag: "experienced",
+      reason: `Listing asks for about ${years} years — in band for this CV.`,
     };
   }
   if (years !== null && years >= 2) {
     return {
       points: 12,
       flag: "experienced",
-      reason: `Listing mentions about ${years} years. Not treated as senior.`,
+      reason: `Listing mentions about ${years} years.`,
     };
   }
   if (levelOpen) {
-    return { points: 12, flag: "open", reason: "Listing level is Any, so it is not senior-only." };
+    return { points: 12, flag: "open", reason: "Listing level is Any." };
   }
   if (/\bintern|trainee|apprentice\b/i.test(title)) {
-    return { points: 6, flag: "junior_mid", reason: "Title looks intern or trainee." };
+    return { points: 4, flag: "junior_mid", reason: "Title looks intern or trainee — likely under-level." };
   }
-  return { points: 15, flag: "junior_mid", reason: "No senior title or senior-only level." };
+  return { points: 13, flag: "junior_mid", reason: "Open mid-level software title." };
 }
 
 function yearsRequired(blob: string): number | null {
@@ -175,9 +203,9 @@ function scoreSalary(blob: string): { points: number; reason: string } {
   if (amounts.length === 0) return { points: 0, reason: "No salary listed." };
   const overlapping = amounts.some((amount) => overlapsBand(amount));
   const above = amounts.every((amount) => amount.min > bandMax(amount.currency));
-  if (overlapping) return { points: 5, reason: "Listed pay overlaps the €45–60k ask." };
-  if (above) return { points: 0, reason: "Listed pay sits above the €45–60k band." };
-  return { points: 2, reason: "Salary is listed but does not overlap €45–60k." };
+  if (overlapping) return { points: 5, reason: "Listed pay overlaps the €55–80k ask." };
+  if (above) return { points: 0, reason: "Listed pay sits above the €55–80k band." };
+  return { points: 2, reason: "Salary is listed but does not overlap €55–80k." };
 }
 
 type Amount = { currency: "EUR" | "GBP" | "USD"; min: number; max: number };
@@ -211,18 +239,19 @@ function scale(raw: string, thousands: boolean): number {
 }
 
 function bandMax(currency: Amount["currency"]): number {
-  if (currency === "GBP") return 60_000;
-  if (currency === "USD") return 75_000;
-  return 70_000;
+  if (currency === "GBP") return 75_000;
+  if (currency === "USD") return 100_000;
+  return 85_000;
 }
 
 function overlapsBand(amount: Amount): boolean {
+  // Lead SE, 5+ years, Ireland — mid/senior remote band, not junior €45–60k.
   const [min, max] =
     amount.currency === "GBP"
-      ? [35_000, 60_000]
+      ? [45_000, 75_000]
       : amount.currency === "USD"
-        ? [45_000, 75_000]
-        : [40_000, 70_000];
+        ? [60_000, 100_000]
+        : [50_000, 85_000];
   return amount.max >= min && amount.min <= max;
 }
 

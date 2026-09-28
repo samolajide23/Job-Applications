@@ -1,19 +1,30 @@
 import { isSeniorTitle } from "@/lib/statuses";
 import type { Application, Eligibility, QueueRules, SeniorityFlag } from "@/lib/types";
 
+function normalizeKeywordText(value: string): string {
+  return value.toLowerCase().replace(/[-_]+/g, " ").replace(/\s+/g, " ").trim();
+}
+
 export function matchesKeywords(application: Pick<Application, "title" | "company" | "tags" | "excerpt" | "location" | "notes">, keywords: string[]): boolean {
   if (keywords.length === 0) return true;
-  const haystack = [
-    application.title,
-    application.company,
-    application.tags.join(" "),
-    application.excerpt ?? "",
-    application.location ?? "",
-    application.notes ?? "",
-  ]
-    .join("\n")
-    .toLowerCase();
-  return keywords.some((keyword) => haystack.includes(keyword.trim().toLowerCase()));
+  const haystack = normalizeKeywordText(
+    [
+      application.title,
+      application.company,
+      application.tags.join(" "),
+      application.excerpt ?? "",
+      application.location ?? "",
+      application.notes ?? "",
+    ].join("\n"),
+  );
+  return keywords.some((keyword) => {
+    const needle = normalizeKeywordText(keyword);
+    if (!needle) return false;
+    if (haystack.includes(needle)) return true;
+    // "full-stack" ↔ "fullstack"
+    if (needle.includes(" ")) return haystack.includes(needle.replace(/\s+/g, ""));
+    return false;
+  });
 }
 
 export function roleIsSenior(application: Pick<Application, "title" | "scoreBreakdown">): boolean {
