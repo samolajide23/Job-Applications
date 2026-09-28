@@ -1,15 +1,15 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { CandidateView } from "@/components/candidate-view";
 import type { NewRowInput } from "@/components/entry-dialogs";
+import { FindJobsView } from "@/components/find-jobs-view";
 import { QueueView } from "@/components/queue-view";
 import { TrackerView } from "@/components/tracker-view";
 import { zonedLocalToIso } from "@/lib/dates";
 import { computeStats } from "@/lib/stats";
 import type { Application, QueueRules } from "@/lib/types";
 
-type Tab = "tracker" | "candidates" | "queue";
+type Tab = "tracker" | "find" | "queue";
 
 type Payload = {
   applications: Application[];
@@ -150,7 +150,7 @@ export function Dashboard({ initialApplications, initialRules }: { initialApplic
       setNotice(
         `Added ${body.added ?? 0} roles (${body.autoQueued ?? 0} auto-queued, ${body.alreadyTracked ?? 0} already tracked, ${body.ineligible ?? 0} ineligible skipped). ${problems}`.trim(),
       );
-      setTab("candidates");
+      setTab("find");
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Discovery failed.");
     } finally {
@@ -190,11 +190,11 @@ export function Dashboard({ initialApplications, initialRules }: { initialApplic
       <header>
         <p className="text-xs tracking-[0.16em] text-primary uppercase">Samuel Olajide</p>
         <h1 className="text-2xl font-semibold tracking-tight">Job applications</h1>
-        <p className="text-sm text-muted-foreground">Dundalk, Ireland · Europe/London · discover, queue, then apply</p>
+        <p className="text-sm text-muted-foreground">Dundalk, Ireland · Europe/London · find jobs, queue, then apply</p>
       </header>
       <div role="tablist" aria-label="Dashboard sections" className="flex w-fit gap-1 rounded-xl bg-muted/70 p-1">
         <TabButton id="tracker" current={tab} onSelect={setTab} label="Tracker" />
-        <TabButton id="candidates" current={tab} onSelect={setTab} label="Candidates" />
+        <TabButton id="find" current={tab} onSelect={setTab} label="Find jobs" />
         <TabButton id="queue" current={tab} onSelect={setTab} label="Queue" count={queued} />
       </div>
       {error ? (
@@ -211,13 +211,12 @@ export function Dashboard({ initialApplications, initialRules }: { initialApplic
           onCreate={handleCreate}
           onImport={handleImport}
         />
-      ) : tab === "candidates" ? (
-        <CandidateView
+      ) : tab === "find" ? (
+        <FindJobsView
           applications={applications}
           rules={rules}
           onPatch={handlePatch}
           onBulk={handleBulk}
-          onCreate={handleCreate}
           onDiscover={handleDiscover}
           onSaveRules={handleSaveRules}
           discovering={discovering}

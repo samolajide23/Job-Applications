@@ -86,7 +86,7 @@ Redeploy after env or seed changes:
 vercel --prod
 ```
 
-The cron only runs when `CRON_SECRET` is set on the Vercel project. You can also pull on demand from the Candidates tab, or:
+The cron only runs when `CRON_SECRET` is set on the Vercel project. You can also search on demand from the Find jobs tab, or:
 
 ```bash
 curl -X POST "$APP_URL/api/discover" \
@@ -96,7 +96,7 @@ curl -X POST "$APP_URL/api/discover" \
 ## What the screens do
 
 - **Tracker** — seeded history plus anything already applied, skipped, or blocked. KPIs, source mix, last 30 days in Europe/London, search, and inline status, score, location, and notes.
-- **Candidates** — discovered roles with keyword, seniority, eligibility, source, company, recency, and score filters. Queue or pass a role. Save the same filters as auto-queue rules. Auto-queue is on by default.
+- **Find jobs** — browse newly found roles. Filter with keywords, hide senior/blocked locations, then queue or pass. Extra filters (source, score, auto-queue defaults) sit under More filters.
 - **Queue** — roles the agent should apply to.
 
 Response rate is `(rejected + interview + final interview + offer + recruiter contacted) / submitted`. Submitted means applied plus later pipeline statuses. Skipped, blocked, needs input, and candidates are not in that denominator. The Applied card is only the current `applied` status.

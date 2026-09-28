@@ -90,7 +90,7 @@ Or paste CSV in the dashboard. Header: `timestamp,company,title,url,source,statu
 
 Discovery runs here:
 
-- Candidates → **Pull new roles**
+- Find jobs → **Search boards**
 - `POST /api/discover` with `SYNC_TOKEN`
 - Vercel Cron `GET /api/discover` daily at 06:30 UTC when `CRON_SECRET` is set
 
