@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { parseHistoryCsv } from "@/lib/csv";
 import {
+  collapseUrlAliases,
   ensureSchema,
   getRules,
   historyToRow,
@@ -107,6 +108,10 @@ export async function createOrUpdate(
 
 export async function insertNew(rows: NewApplication[]): Promise<string[]> {
   return insertIgnore(await getDb(), rows);
+}
+
+export async function collapseAliases(): Promise<number> {
+  return collapseUrlAliases(await getDb());
 }
 
 export async function readRules(): Promise<QueueRules> {

@@ -10,6 +10,21 @@ test("normalizes trailing slashes and host case", () => {
   );
 });
 
+test("collapses Ashby apply URLs and Greenhouse board hosts", () => {
+  assert.equal(
+    normalizeUrl("https://jobs.ashbyhq.com/elevenlabs/abc-123/application"),
+    "https://jobs.ashbyhq.com/elevenlabs/abc-123",
+  );
+  assert.equal(
+    normalizeUrl("https://job-boards.greenhouse.io/gitlab/jobs/123?utm_source=x"),
+    "https://boards.greenhouse.io/gitlab/jobs/123",
+  );
+  assert.equal(
+    normalizeUrl("https://databricks.com/careers/job?gh_jid=99&utm_campaign=x"),
+    "https://databricks.com/careers/job?gh_jid=99",
+  );
+});
+
 test("parses the seed file without dropping quoted titles", () => {
   const csv = readFileSync(new URL("../../data/seed.csv", import.meta.url), "utf8");
   const { records, errors } = parseHistoryCsv(csv);

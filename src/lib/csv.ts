@@ -89,8 +89,20 @@ export function normalizeUrl(raw: string): string | null {
     if (url.protocol !== "http:" && url.protocol !== "https:") return null;
     url.hash = "";
     url.hostname = url.hostname.toLowerCase();
+    // Same Greenhouse board, two public hosts.
+    if (url.hostname === "job-boards.greenhouse.io") {
+      url.hostname = "boards.greenhouse.io";
+    }
     if (url.pathname.length > 1) {
       url.pathname = url.pathname.replace(/\/+$/, "");
+    }
+    // Ashby job page and apply page are the same role.
+    if (url.hostname.endsWith("ashbyhq.com") && url.pathname.endsWith("/application")) {
+      url.pathname = url.pathname.slice(0, -"/application".length) || "/";
+    }
+    // Drop tracking noise; keep ATS ids like gh_jid.
+    for (const key of [...url.searchParams.keys()]) {
+      if (/^(utm_|ref$|source$|gh_src)/i.test(key)) url.searchParams.delete(key);
     }
     return url.toString();
   } catch {

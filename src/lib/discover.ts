@@ -56,13 +56,42 @@ export function isSoftwareRole(title: string, tags: string[] = []): boolean {
  * Keep applicable roles: software, recent (except open ATS boards), not geo-blocked,
  * not Staff/Principal/Director+, matching CV stack keywords. Score ≥ minScore → Queue.
  */
+function sourceRank(source: string): number {
+  switch (source) {
+    case "Ashby":
+      return 0;
+    case "Greenhouse":
+      return 1;
+    case "HiringCafe":
+      return 2;
+    case "Jobicy":
+      return 3;
+    case "Remotive":
+      return 4;
+    case "RemoteOK":
+      return 5;
+    default:
+      return 9;
+  }
+}
+
+function roleKey(company: string, title: string): string {
+  return `${company.trim().toLowerCase()}|${title.trim().toLowerCase()}`;
+}
+
 export function prepareDiscovery(
   jobs: DiscoveredJob[],
   rules: QueueRules,
   now: Date = new Date(),
 ): PrepareResult {
-  const sorted = [...jobs].sort((a, b) => (b.postedAt ?? "").localeCompare(a.postedAt ?? ""));
-  const seen = new Set<string>();
+  // Prefer ATS boards over aggregators when the same company+title appears twice.
+  const sorted = [...jobs].sort((a, b) => {
+    const rank = sourceRank(a.source) - sourceRank(b.source);
+    if (rank !== 0) return rank;
+    return (b.postedAt ?? "").localeCompare(a.postedAt ?? "");
+  });
+  const seenUrls = new Set<string>();
+  const seenRoles = new Set<string>();
   const accepted: PreparedJob[] = [];
   let pulled = 0;
   let ineligible = 0;
@@ -73,8 +102,10 @@ export function prepareDiscovery(
 
   for (const job of sorted) {
     const url = normalizeUrl(job.url);
-    if (!url || seen.has(url)) continue;
+    if (!url || seenUrls.has(url)) continue;
     if (!job.company.trim() || !job.title.trim()) continue;
+    const role = roleKey(job.company, job.title);
+    if (seenRoles.has(role)) continue;
     pulled += 1;
     if (!isSoftwareRole(job.title, job.tags)) {
       notSoftware += 1;
@@ -115,7 +146,8 @@ export function prepareDiscovery(
         continue;
       }
     }
-    seen.add(url);
+    seenUrls.add(url);
+    seenRoles.add(role);
     accepted.push({
       url,
       company: job.company.trim().slice(0, 200),

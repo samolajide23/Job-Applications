@@ -3,7 +3,7 @@ import { failureResponse, unauthorized } from "@/lib/api";
 import { authorize } from "@/lib/auth";
 import { pullBoards } from "@/lib/boards";
 import { prepareDiscovery } from "@/lib/discover";
-import { insertNew, promoteQueueMatches, readRules } from "@/lib/db";
+import { collapseAliases, insertNew, promoteQueueMatches, readRules } from "@/lib/db";
 import type { NewApplication } from "@/lib/repository";
 
 export const runtime = "nodejs";
@@ -35,6 +35,7 @@ async function runDiscovery() {
     discoveredAt: new Date().toISOString(),
     origin: "discovery",
   }));
+  const collapsed = await collapseAliases();
   const inserted = new Set(await insertNew(rows));
   const added = prepared.accepted.filter((job) => inserted.has(job.url));
   const promoted = await promoteQueueMatches();
@@ -51,6 +52,7 @@ async function runDiscovery() {
     applicable: prepared.accepted.length,
     added: added.length,
     alreadyTracked: prepared.accepted.length - added.length,
+    collapsedAliases: collapsed,
     skipped: {
       ineligible: prepared.ineligible,
       notSoftware: prepared.notSoftware,

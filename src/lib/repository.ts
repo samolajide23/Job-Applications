@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import type { HistoryRecord } from "@/lib/csv";
+import { normalizeUrl, type HistoryRecord } from "@/lib/csv";
 import { isTrackerStatus, type Status } from "@/lib/statuses";
 import type { Application, Origin, QueueRules, ScoreBreakdown } from "@/lib/types";
 import { DEFAULT_RULES } from "@/lib/types";
@@ -143,6 +143,50 @@ export async function markSeedLoaded(db: Queryable): Promise<void> {
   await db.query(
     `INSERT INTO app_meta (key, value) VALUES ('seed_v1', '1') ON CONFLICT (key) DO NOTHING`,
   );
+}
+
+/**
+ * Collapse URL aliases already in the DB (Ashby /application pages, Greenhouse host variants).
+ * Keeps the row with the stronger status when both the alias and canonical URL exist.
+ */
+export async function collapseUrlAliases(db: Queryable): Promise<number> {
+  const rows = await db.query<{ id: string; url: string; status: string }>(
+    `SELECT id, url, status FROM applications
+     WHERE url ILIKE '%ashbyhq.com%/application'
+        OR url ILIKE '%job-boards.greenhouse.io%'`,
+  );
+  let removed = 0;
+  const statusRank = (status: string): number => {
+    if (["applied", "interview", "final_interview", "offer", "rejected", "recruiter_contacted"].includes(status)) {
+      return 3;
+    }
+    if (status === "queued") return 2;
+    if (status === "discovered") return 1;
+    return 0;
+  };
+  for (const row of rows) {
+    const canonical = normalizeUrl(row.url);
+    if (!canonical || canonical === row.url) continue;
+    const existing = await db.query<{ id: string; status: string }>(
+      `SELECT id, status FROM applications WHERE url = $1`,
+      [canonical],
+    );
+    if (existing[0]) {
+      if (statusRank(row.status) > statusRank(existing[0].status)) {
+        await db.query(`DELETE FROM applications WHERE id = $1`, [existing[0].id]);
+        await db.query(`UPDATE applications SET url = $1, updated_at = NOW() WHERE id = $2`, [
+          canonical,
+          row.id,
+        ]);
+      } else {
+        await db.query(`DELETE FROM applications WHERE id = $1`, [row.id]);
+      }
+      removed += 1;
+      continue;
+    }
+    await db.query(`UPDATE applications SET url = $1, updated_at = NOW() WHERE id = $2`, [canonical, row.id]);
+  }
+  return removed;
 }
 
 export async function insertIgnore(db: Queryable, rows: NewApplication[]): Promise<string[]> {

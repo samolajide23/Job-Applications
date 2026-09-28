@@ -147,6 +147,18 @@ test("auto-filters to applicable roles and auto-queues strong matches", () => {
         level: "Junior",
       },
       {
+        url: "https://jobs.ashbyhq.com/acme/123",
+        company: "Acme",
+        title: "Software Engineer",
+        source: "Ashby",
+        location: "Remote Ireland",
+        description: "Python TypeScript React Node LLM RAG APIs automation. €70,000-€90,000",
+        tags: ["python"],
+        postedAt: "2026-09-23T00:00:00.000Z",
+        salaryText: null,
+        level: null,
+      },
+      {
         url: "https://example.com/us-only",
         company: "Acme",
         title: "Backend Engineer",
@@ -186,10 +198,11 @@ test("auto-filters to applicable roles and auto-queues strong matches", () => {
     { ...DEFAULT_RULES, autoQueue: true },
     new Date("2026-09-24T12:00:00.000Z"),
   );
-  assert.equal(prepared.pulled, 4);
   assert.equal(prepared.ineligible, 1);
   assert.equal(prepared.senior, 1);
   assert.equal(prepared.notSoftware, 1);
   assert.equal(prepared.accepted.length, 1);
+  assert.equal(prepared.accepted[0]?.source, "Ashby");
+  assert.equal(prepared.accepted[0]?.url, "https://jobs.ashbyhq.com/acme/123");
   assert.equal(prepared.accepted[0]?.status, "queued");
 });
