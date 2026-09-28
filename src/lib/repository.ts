@@ -153,6 +153,7 @@ export async function collapseUrlAliases(db: Queryable): Promise<number> {
   const rows = await db.query<{ id: string; url: string; status: string }>(
     `SELECT id, url, status FROM applications
      WHERE url ILIKE '%ashbyhq.com%/application'
+        OR url ILIKE '%jobs.lever.co%/apply'
         OR url ILIKE '%job-boards.greenhouse.io%'`,
   );
   let removed = 0;

@@ -96,9 +96,12 @@ export function normalizeUrl(raw: string): string | null {
     if (url.pathname.length > 1) {
       url.pathname = url.pathname.replace(/\/+$/, "");
     }
-    // Ashby job page and apply page are the same role.
+    // Ashby / Lever job page and apply page are the same role.
     if (url.hostname.endsWith("ashbyhq.com") && url.pathname.endsWith("/application")) {
       url.pathname = url.pathname.slice(0, -"/application".length) || "/";
+    }
+    if (url.hostname.endsWith("lever.co") && url.pathname.endsWith("/apply")) {
+      url.pathname = url.pathname.slice(0, -"/apply".length) || "/";
     }
     // Drop tracking noise; keep ATS ids like gh_jid.
     for (const key of [...url.searchParams.keys()]) {

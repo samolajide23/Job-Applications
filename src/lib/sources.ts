@@ -2,6 +2,7 @@ export type JobSourceId =
   | "HiringCafe"
   | "Greenhouse"
   | "Ashby"
+  | "Lever"
   | "Jobicy"
   | "Remotive"
   | "RemoteOK";
@@ -21,6 +22,7 @@ export const JOB_SOURCES: { id: JobSourceId; label: string }[] = [
   { id: "HiringCafe", label: "Hiring Cafe" },
   { id: "Greenhouse", label: "Greenhouse" },
   { id: "Ashby", label: "Ashby" },
+  { id: "Lever", label: "Lever" },
   { id: "Jobicy", label: "Jobicy" },
   { id: "Remotive", label: "Remotive" },
   { id: "RemoteOK", label: "Remote OK" },

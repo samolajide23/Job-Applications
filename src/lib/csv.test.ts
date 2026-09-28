@@ -10,10 +10,14 @@ test("normalizes trailing slashes and host case", () => {
   );
 });
 
-test("collapses Ashby apply URLs and Greenhouse board hosts", () => {
+test("collapses Ashby/Lever apply URLs and Greenhouse board hosts", () => {
   assert.equal(
     normalizeUrl("https://jobs.ashbyhq.com/elevenlabs/abc-123/application"),
     "https://jobs.ashbyhq.com/elevenlabs/abc-123",
+  );
+  assert.equal(
+    normalizeUrl("https://jobs.lever.co/metabase/abc-123/apply"),
+    "https://jobs.lever.co/metabase/abc-123",
   );
   assert.equal(
     normalizeUrl("https://job-boards.greenhouse.io/gitlab/jobs/123?utm_source=x"),

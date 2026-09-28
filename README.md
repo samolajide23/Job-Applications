@@ -9,11 +9,12 @@ Discovery pulls these sources in parallel:
 | **Hiring Cafe** | `POST hiringcafe.com/api/search-jobs` | Private search; Cloudflare often blocks server hosts (fails fast after one probe) |
 | **Greenhouse** | `GET boards-api.greenhouse.io/v1/boards/{token}/jobs?content=true` | ~40 company boards; open roles kept even if first posted >14 days ago |
 | **Ashby** | `GET api.ashbyhq.com/posting-api/job-board/{org}` | ~35 company boards from apply history (Notion, Linear, Cursor, Cohere, …) |
+| **Lever** | `GET api.lever.co/v0/postings/{site}?mode=json` | Metabase + Spotify, Qonto, Palantir, and other verified Lever sites |
 | **Jobicy** | `GET jobicy.com/api/v2/remote-jobs` | Europe/Ireland engineering + Python/TypeScript/React tags |
 | **Remotive** | `GET remotive.com/api/remote-jobs` | Small recent public feed; software-adjacent categories kept |
 | **Remote OK** | `GET remoteok.com/api` | Public JSON feed |
 
-Filters follow Samuel's CV (Lead Software Engineer, 5+ years, Ireland): software roles matching Python/TypeScript/React/Node/AWS/K8s/AI keywords; Staff/Principal/Director/manager titles dropped (Senior/Lead kept); geo-blocked and Ceriga skipped. Score ≥60 auto-queues. Greenhouse/Ashby open roles ignore the 14-day age cut.
+Filters follow Samuel's CV (Lead Software Engineer, 5+ years, Ireland): software roles matching Python/TypeScript/React/Node/AWS/K8s/AI keywords; Staff/Principal/Director/manager titles dropped (Senior/Lead kept); geo-blocked and Ceriga skipped. Score ≥60 auto-queues. Greenhouse/Ashby/Lever open roles ignore the 14-day age cut.
 
 ## Local
 
